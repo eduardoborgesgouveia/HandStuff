@@ -24,10 +24,10 @@ class segmentationUtils:
         if opt.__contains__('neuromorphic'):
             imagem = 255 * imagem # Now scale by 255
             img = imagem.astype(np.uint8)
+            img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
         else:
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
-            plt.imshow(img)
-            plt.show()
+           
         for i in range(len(opt)):
             if opt[i].__contains__('avg'):
                 img = cv.blur(img, (5, 5))
@@ -57,8 +57,9 @@ class segmentationUtils:
         img2 = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
         markers = cv.watershed(img2,markers)
         img2[markers == -1] = [255,0,0]
+   
 
-        return img2
+        return img2, markers
 
     '''
     this method run a demo for watershed segmentation technique. 
@@ -69,20 +70,32 @@ class segmentationUtils:
         - 1 neuromorphic image (watershed segmentation + filter of avg and median)
     '''
     def watershed_demo():
-        neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Detection/assets/testes/Mouse_71.png')
-        standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Detection/assets/testes/standard_mouse.jpeg')
-        watershedNeuromorphicImage = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
-        watershedStandardImage = segmentationUtils.watershed(standardImage)
+        neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_71.png')
+        standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
+        watershedNeuromorphicImage, neuromorphicMask = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
+        watershedStandardImage, standardMask = segmentationUtils.watershed(standardImage)
 
-        f, axarr = plt.subplots(2,2)
+        f, axarr = plt.subplots(2,3)
         axarr[0,0].set_title('neuromorphic image [original]')
         axarr[0,0].imshow(neuromorphicImage)
-        axarr[0,1].set_title('standard image [original]')
-        axarr[0,1].imshow(standardImage)
-        axarr[1,0].set_title('neuromorphic image [watershed]')
-        axarr[1,0].imshow(watershedNeuromorphicImage)
-        axarr[1,1].set_title('neuromorphic image [watershed]')
+
+        axarr[0,1].set_title('neuromorphic image [watershed]')
+        axarr[0,1].imshow(watershedNeuromorphicImage)
+
+        axarr[0,2].set_title('neuromorphic - mask')
+        axarr[0,2].imshow(neuromorphicMask)
+
+        axarr[1,0].set_title('standard image [original]')
+        axarr[1,0].imshow(standardImage)
+
+        axarr[1,1].set_title('standard image [watershed]')
         axarr[1,1].imshow(watershedStandardImage)
+
+        axarr[1,2].set_title('standard - mask')
+        axarr[1,2].imshow(standardMask)
+
+        
+        plt.show()
 
 
 
