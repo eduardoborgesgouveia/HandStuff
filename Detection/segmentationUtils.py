@@ -57,10 +57,50 @@ class segmentationUtils:
         img2 = cv.cvtColor(img, cv.COLOR_GRAY2RGB)
         markers = cv.watershed(img2,markers)
         img2[markers == -1] = [255,0,0]
-   
 
+        detections = segmentationUtils.makeRectDetection(markers)
+
+        imTeste = segmentationUtils.drawRect(imagem,detections)
+        plt.imshow(imTeste)
+        plt.show()
         return img2, markers
 
+    '''
+    this method was make in order to receive a mask from multiple detection using the watershed method
+    and make a rectangular bounding box ao redor of the detections.
+    If one or more rectangular detections has a UOI more than 0.3 (30%) the bounding boxes are merged and
+    became just one
+    '''
+    def makeRectDetection(mask):
+        #make sure that the edges of the image is not being marked
+        mask[0,:] = 1
+        mask[:,0] = 1
+        mask[len(mask[0,:])-1,:] = 1
+        mask[:, len(mask[:,0])-1] = 1
+        unique = np.unique(mask)
+        unique = unique[unique != -1]
+        unique = unique[unique != 1]
+        objects = []
+        for i in range(len(unique)):
+            positions = np.where(mask == unique[i])
+            x = min(positions[0])
+            y = max(positions[1])
+            lastX = max(positions[0])
+            lastY = min(positions[1])
+            width = lastX - x
+            height = y - lastY
+            objects.append([x, y, width, height])
+        return objects
+
+        
+
+
+    def drawRect(img, detections):
+        for i in range(len(detections)):
+            img[detections[i][0],detections[i][1]] = [255,44,0]
+            img[detections[i][1],detections[i][0]:(detections[i][0]+detections[i][2])] = [255,44,0]
+            img[detections[i][1]:(detections[i][1]-detections[i][3]),detections[i][0]] = [255,44,0]
+        return img
     '''
     this method run a demo for watershed segmentation technique. 
     this will plot 4 images:
