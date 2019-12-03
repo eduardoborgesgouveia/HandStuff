@@ -2,6 +2,7 @@
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
+from iou import iou
 
 class segmentationUtils:
 
@@ -22,9 +23,10 @@ class segmentationUtils:
             opt = options.split('--')
 
         if opt.__contains__('neuromorphic'):
-            imagem = 255 * imagem # Now scale by 255
-            img = imagem.astype(np.uint8)
-            img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
+            img = 255 * imagem # Now scale by 255
+            img = img.astype(np.uint8)
+            if len(img.shape) == 3:
+                img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
            
@@ -39,12 +41,12 @@ class segmentationUtils:
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
         kernel = np.ones((3,3),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
+        opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 1)
         # sure background area
-        sure_bg = cv.dilate(opening,kernel,iterations=3)
+        sure_bg = cv.dilate(opening,kernel,iterations=20)
         # Finding sure foreground area
-        dist_transform = cv.distanceTransform(opening,cv.DIST_L2,5)
-        ret, sure_fg = cv.threshold(dist_transform,0.3*dist_transform.max(),255,0)
+        dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
+        ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
         # Finding unknown region
         sure_fg = np.uint8(sure_fg)
         unknown = cv.subtract(sure_bg,sure_fg)
@@ -61,22 +63,19 @@ class segmentationUtils:
         detections = segmentationUtils.makeRectDetection(markers)
 
         imTeste = segmentationUtils.drawRect(imagem,detections)
-        plt.imshow(imTeste)
-        plt.show()
-        return img2, markers
+
+        return imTeste, markers
 
     '''
     this method was make in order to receive a mask from multiple detection using the watershed method
     and make a rectangular bounding box ao redor of the detections.
-    If one or more rectangular detections has a UOI more than 0.3 (30%) the bounding boxes are merged and
-    became just one
     '''
     def makeRectDetection(mask):
         #make sure that the edges of the image is not being marked
         mask[0,:] = 1
         mask[:,0] = 1
-        mask[len(mask[0,:])-1,:] = 1
-        mask[:, len(mask[:,0])-1] = 1
+        mask[mask.shape[0]-1,:] = 1
+        mask[:, mask.shape[1]-1] = 1
         unique = np.unique(mask)
         unique = unique[unique != -1]
         unique = unique[unique != 1]
@@ -84,23 +83,64 @@ class segmentationUtils:
         for i in range(len(unique)):
             positions = np.where(mask == unique[i])
             x = min(positions[0])
-            y = max(positions[1])
+            y = min(positions[1])
             lastX = max(positions[0])
-            lastY = min(positions[1])
-            width = lastX - x
+            lastY = max(positions[1])
+            width = x - lastX
             height = y - lastY
             objects.append([x, y, width, height])
+
+        #objects = segmentationUtils.mergeDetections(objects)
         return objects
 
         
 
 
-    def drawRect(img, detections):
+    def drawRect(img, detections,lineWidth=None):
+        bbColor = 8
+        if lineWidth == None:
+            lineWidth = round(0.01*img.shape[0])
+        if len(img.shape) == 3:
+            bbColor = [255,0,0]
         for i in range(len(detections)):
-            img[detections[i][0],detections[i][1]] = [255,44,0]
-            img[detections[i][1],detections[i][0]:(detections[i][0]+detections[i][2])] = [255,44,0]
-            img[detections[i][1]:(detections[i][1]-detections[i][3]),detections[i][0]] = [255,44,0]
+            img[detections[i][0],detections[i][1]] = bbColor
+            img[detections[i][0]:detections[i][0]+lineWidth,detections[i][1]:(detections[i][1]-detections[i][3])] = bbColor
+            img[detections[i][0]:(detections[i][0]-detections[i][2]),detections[i][1]:detections[i][1]+lineWidth] = bbColor
+            img[(detections[i][0]-detections[i][2]):(detections[i][0]-detections[i][2])+lineWidth,detections[i][1]:(detections[i][1]-detections[i][3])] = bbColor
+            img[detections[i][0]:(detections[i][0]-detections[i][2]),(detections[i][1]-detections[i][3]):(detections[i][1]-detections[i][3])+lineWidth] = bbColor
         return img
+
+    '''
+        If one or more rectangular detections has a IOU the bounding boxes are merged and
+    became just one
+    '''
+    def mergeDetections(detections):
+        coordinates = segmentationUtils.getPointsFromCoordinates(detections)
+        retorno = []
+        for i in range(len(detections)):
+            for j in range(len(detections)):
+                area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
+                if area > 0:
+                    X1 = max(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][1])
+                    X2 = min(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][1])
+                    Y1 = max(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
+                    Y2 = min(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
+                    width = X2 - X1
+                    height = Y2 - Y1
+                    retorno.append([X1, Y1, width, height])
+        return retorno
+
+    def getPointsFromCoordinates(detections):
+        objects = []
+        for i in range(len(detections)):
+            x1 = detections[i][0]
+            y1 = detections[i][1]
+            x2 = detections[i][0] + detections[i][2]
+            y2 = detections[i][1] + detections[i][3]
+            objects.append([x1, y1, x2, y2])
+        return objects
+
+
     '''
     this method run a demo for watershed segmentation technique. 
     this will plot 4 images:
