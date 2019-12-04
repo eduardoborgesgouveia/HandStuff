@@ -90,6 +90,7 @@ class segmentationUtils:
             height = lastY - y 
             objects.append([x, y, width, height])
 
+        objects = segmentationUtils.getPointsFromCoordinates(objects)
         objects = segmentationUtils.filterDetections(objects)
 
         return objects
@@ -97,11 +98,10 @@ class segmentationUtils:
 
     def filterDetections(detections):
         flag = True
-        retorno = detections
-        coordinates = segmentationUtils.getPointsFromCoordinates(detections)
-        while(segmentationUtils.checkIntersec(coordinates)):
-            retorno = segmentationUtils.mergeDetections(coordinates)
-            coordinates = segmentationUtils.getPointsFromCoordinates(retorno)
+        retorno = detections[:]
+        while(flag):
+            flag, pos = segmentationUtils.checkIntersec(retorno)
+            retorno = segmentationUtils.mergeDetections(retorno,pos)
         return retorno
 
     def checkIntersec(coordinates):
@@ -112,15 +112,16 @@ class segmentationUtils:
                 if j > i:
                     area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
                     if area > 0.0 and area != 1.0:
-                        return True
+                        return True, [i,j]
                     else:
                         register += 1
                         if register == count:
-                            return False
-        return False
+                            return False, None
+        return False, None
 
     def drawRect(img, detections,lineWidth=None):
         bbColor = 8
+        detections = segmentationUtils.getCoordinatesFromPoints(detections)
         if lineWidth == None:
             lineWidth = round(0.01*img.shape[0])
         if len(img.shape) == 3:
@@ -137,27 +138,45 @@ class segmentationUtils:
         If one or more rectangular detections has a IOU the bounding boxes are merged and
     became just one
     '''
-    def mergeDetections(detections):
-        coordinates = detections
-        retorno = []
-        if len(detections) == 1:
-            return detections
-        else:
-            for i in range(len(detections)):
-                for j in range(len(detections)):
-                    if j > i:
-                        area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
-                        if area > 0.0:
-                            X1 = max(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
-                            X2 = min(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
-                            Y1 = max(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
-                            Y2 = min(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
-                            width = X1 - X2
-                            height = Y1 - Y2
-                            retorno.append([X2, Y2, width, height])
-                        else:
-                            retorno.append(detections[i])
+    def mergeDetections(detections,pos):
+        retorno = detections
+        if pos != None:
+            coordinates = detections[:]
+            retorno = []
+            X1 = max(coordinates[pos[0]][0],coordinates[pos[0]][2],coordinates[pos[1]][0],coordinates[pos[1]][2])
+            X2 = min(coordinates[pos[0]][0],coordinates[pos[0]][2],coordinates[pos[1]][0],coordinates[pos[1]][2])
+            Y1 = max(coordinates[pos[0]][1],coordinates[pos[0]][3],coordinates[pos[1]][1],coordinates[pos[1]][3])
+            Y2 = min(coordinates[pos[0]][1],coordinates[pos[0]][3],coordinates[pos[1]][1],coordinates[pos[1]][3])
+            width = X1 - X2        
+            height = Y1 - Y2
+
+            coordinates.remove(detections[pos[0]])
+            coordinates.remove(detections[pos[1]])
+
+            retorno = coordinates
+            retorno.append([X2, Y2, X1, Y1])                   
         return retorno
+    # def mergeDetections(detections):
+    #     coordinates = detections
+    #     retorno = []
+    #     if len(detections) == 1:
+    #         return detections
+    #     else:
+    #         for i in range(len(detections)):
+    #             for j in range(len(detections)):
+    #                 if j > i:
+    #                     area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
+    #                     if area > 0.0:
+    #                         X1 = max(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
+    #                         X2 = min(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
+    #                         Y1 = max(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
+    #                         Y2 = min(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
+    #                         width = X1 - X2
+    #                         height = Y1 - Y2
+    #                         retorno.append([X2, Y2, width, height])
+    #                     else:
+    #                         retorno.append(detections[i])
+    #     return retorno
 
     def getPointsFromCoordinates(detections):
         objects = []
@@ -167,6 +186,15 @@ class segmentationUtils:
             x2 = detections[i][0] + detections[i][2]
             y2 = detections[i][1] + detections[i][3]
             objects.append([x1, y1, x2, y2])
+        return objects
+    def getCoordinatesFromPoints(detections):
+        objects = []
+        for i in range(len(detections)):
+            x1 = detections[i][0]
+            y1 = detections[i][1]
+            width = detections[i][2] - x1
+            lenght = detections[i][3] - y1
+            objects.append([x1, y1, width, lenght])
         return objects
 
 
