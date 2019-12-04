@@ -6,11 +6,12 @@ from openAEDAT import aedatUtils
 import matplotlib.animation as animation
 from segmentationUtils import segmentationUtils
 
-path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mouse.aedat'
+#path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mouse.aedat'
+path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
 
 t, x, y, p = aedatUtils.loadaerdat(path)
 
-tI=100000 #50 ms
+tI=50000 #50 ms
 
 totalImages = []
 totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
@@ -19,16 +20,19 @@ fig = plt.figure()
 ims = []
 handle = None
 for f in totalImages:
-   
+    
+    
     watershedImage, mask = segmentationUtils.watershed(f,'--avg --median --neuromorphic')
     
     im=watershedImage
+    
+    im = im.astype(np.uint8)
     if handle is None:
-        handle = plt.imshow(im)
+        handle = plt.imshow(np.dstack([im,im,im]))
     else:
-        handle.set_data(im)
+        handle.set_data(np.dstack([im,im,im]))
 
-    plt.pause(.01)
+    plt.pause(0.01)
     plt.draw()
 
 

@@ -117,7 +117,7 @@ class aedatUtils:
                     matrix[idx][j] = (limiar-1)
             idx += 1
         if limiar != 1:
-            matrix = (matrix * 256) + 128 # Normaliza a matriz para 8bits -> 0 - 255
+            matrix = (matrix * 255) + 127.5 # Normaliza a matriz para 8bits -> 0 - 255
             # matrix[matrix < 128] = 1
             # matrix[matrix > 128] = 1
             # matrix[matrix == 128] = 0

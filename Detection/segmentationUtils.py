@@ -23,8 +23,8 @@ class segmentationUtils:
             opt = options.split('--')
 
         if opt.__contains__('neuromorphic'):
-            img = 255 * imagem # Now scale by 255
-            img = img.astype(np.uint8)
+            img = imagem.astype(np.uint8)
+            img[img == 255] = 0
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
@@ -61,10 +61,10 @@ class segmentationUtils:
         img2[markers == -1] = [255,0,0]
 
         detections = segmentationUtils.makeRectDetection(markers)
+        if len(detections) < 5:
+            imagem = segmentationUtils.drawRect(imagem,detections)
 
-        imTeste = segmentationUtils.drawRect(imagem,detections)
-
-        return imTeste, markers
+        return imagem, markers
 
     '''
     this method was make in order to receive a mask from multiple detection using the watershed method
@@ -113,10 +113,7 @@ class segmentationUtils:
                     area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
                     if area > 0.0 and area != 1.0:
                         return True, [i,j]
-                    else:
-                        register += 1
-                        if register == count:
-                            return False, None
+                    
         return False, None
 
     def drawRect(img, detections,lineWidth=None):
@@ -156,27 +153,6 @@ class segmentationUtils:
             retorno = coordinates
             retorno.append([X2, Y2, X1, Y1])                   
         return retorno
-    # def mergeDetections(detections):
-    #     coordinates = detections
-    #     retorno = []
-    #     if len(detections) == 1:
-    #         return detections
-    #     else:
-    #         for i in range(len(detections)):
-    #             for j in range(len(detections)):
-    #                 if j > i:
-    #                     area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
-    #                     if area > 0.0:
-    #                         X1 = max(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
-    #                         X2 = min(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
-    #                         Y1 = max(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
-    #                         Y2 = min(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
-    #                         width = X1 - X2
-    #                         height = Y1 - Y2
-    #                         retorno.append([X2, Y2, width, height])
-    #                     else:
-    #                         retorno.append(detections[i])
-    #     return retorno
 
     def getPointsFromCoordinates(detections):
         objects = []
@@ -207,30 +183,24 @@ class segmentationUtils:
         - 1 neuromorphic image (watershed segmentation + filter of avg and median)
     '''
     def watershed_demo():
-        neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_71.png')
+        neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
         watershedNeuromorphicImage, neuromorphicMask = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
         watershedStandardImage, standardMask = segmentationUtils.watershed(standardImage)
         
 
-        f, axarr = plt.subplots(2,3)
+        f, axarr = plt.subplots(2,2)
         axarr[0,0].set_title('neuromorphic image [original]')
         axarr[0,0].imshow(neuromorphicImage)
 
-        axarr[0,1].set_title('neuromorphic image [watershed]')
-        axarr[0,1].imshow(watershedNeuromorphicImage)
-
-        axarr[0,2].set_title('neuromorphic - mask')
-        axarr[0,2].imshow(neuromorphicMask)
+        axarr[0,1].set_title('neuromorphic - mask')
+        axarr[0,1].imshow(neuromorphicMask)
 
         axarr[1,0].set_title('standard image [original]')
         axarr[1,0].imshow(standardImage)
 
-        axarr[1,1].set_title('standard image [watershed]')
-        axarr[1,1].imshow(watershedStandardImage)
-
-        axarr[1,2].set_title('standard - mask')
-        axarr[1,2].imshow(standardMask)
+        axarr[1,1].set_title('standard - mask')
+        axarr[1,1].imshow(standardMask)
 
         
         plt.show()
