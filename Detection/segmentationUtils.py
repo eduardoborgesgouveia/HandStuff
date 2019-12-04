@@ -86,15 +86,38 @@ class segmentationUtils:
             y = min(positions[1])
             lastX = max(positions[0])
             lastY = max(positions[1])
-            width = x - lastX
-            height = y - lastY
+            width = lastX - x
+            height = lastY - y 
             objects.append([x, y, width, height])
 
-        #objects = segmentationUtils.mergeDetections(objects)
+        objects = segmentationUtils.filterDetections(objects)
+
         return objects
 
-        
 
+    def filterDetections(detections):
+        flag = True
+        retorno = detections
+        coordinates = segmentationUtils.getPointsFromCoordinates(detections)
+        while(segmentationUtils.checkIntersec(coordinates)):
+            retorno = segmentationUtils.mergeDetections(coordinates)
+            coordinates = segmentationUtils.getPointsFromCoordinates(retorno)
+        return retorno
+
+    def checkIntersec(coordinates):
+        count = len(coordinates)
+        register = 0
+        for i in range(len(coordinates)):
+            for j in range(len(coordinates)):
+                if j > i:
+                    area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
+                    if area > 0.0 and area != 1.0:
+                        return True
+                    else:
+                        register += 1
+                        if register == count:
+                            return False
+        return False
 
     def drawRect(img, detections,lineWidth=None):
         bbColor = 8
@@ -104,10 +127,10 @@ class segmentationUtils:
             bbColor = [255,0,0]
         for i in range(len(detections)):
             img[detections[i][0],detections[i][1]] = bbColor
-            img[detections[i][0]:detections[i][0]+lineWidth,detections[i][1]:(detections[i][1]-detections[i][3])] = bbColor
-            img[detections[i][0]:(detections[i][0]-detections[i][2]),detections[i][1]:detections[i][1]+lineWidth] = bbColor
-            img[(detections[i][0]-detections[i][2]):(detections[i][0]-detections[i][2])+lineWidth,detections[i][1]:(detections[i][1]-detections[i][3])] = bbColor
-            img[detections[i][0]:(detections[i][0]-detections[i][2]),(detections[i][1]-detections[i][3]):(detections[i][1]-detections[i][3])+lineWidth] = bbColor
+            img[detections[i][0]:detections[i][0]+lineWidth,detections[i][1]:(detections[i][1]+detections[i][3])] = bbColor
+            img[detections[i][0]:(detections[i][0]+detections[i][2]),detections[i][1]:detections[i][1]+lineWidth] = bbColor
+            img[(detections[i][0]+detections[i][2]):(detections[i][0]+detections[i][2])+lineWidth,detections[i][1]:(detections[i][1]+detections[i][3])] = bbColor
+            img[detections[i][0]:(detections[i][0]+detections[i][2]),(detections[i][1]+detections[i][3]):(detections[i][1]+detections[i][3])+lineWidth] = bbColor
         return img
 
     '''
@@ -115,19 +138,25 @@ class segmentationUtils:
     became just one
     '''
     def mergeDetections(detections):
-        coordinates = segmentationUtils.getPointsFromCoordinates(detections)
+        coordinates = detections
         retorno = []
-        for i in range(len(detections)):
-            for j in range(len(detections)):
-                area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
-                if area > 0:
-                    X1 = max(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][1])
-                    X2 = min(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][1])
-                    Y1 = max(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
-                    Y2 = min(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
-                    width = X2 - X1
-                    height = Y2 - Y1
-                    retorno.append([X1, Y1, width, height])
+        if len(detections) == 1:
+            return detections
+        else:
+            for i in range(len(detections)):
+                for j in range(len(detections)):
+                    if j > i:
+                        area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
+                        if area > 0.0:
+                            X1 = max(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
+                            X2 = min(coordinates[i][0],coordinates[i][2],coordinates[j][0],coordinates[j][2])
+                            Y1 = max(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
+                            Y2 = min(coordinates[i][1],coordinates[i][3],coordinates[j][1],coordinates[j][3])
+                            width = X1 - X2
+                            height = Y1 - Y2
+                            retorno.append([X2, Y2, width, height])
+                        else:
+                            retorno.append(detections[i])
         return retorno
 
     def getPointsFromCoordinates(detections):
@@ -154,6 +183,7 @@ class segmentationUtils:
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
         watershedNeuromorphicImage, neuromorphicMask = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
         watershedStandardImage, standardMask = segmentationUtils.watershed(standardImage)
+        
 
         f, axarr = plt.subplots(2,3)
         axarr[0,0].set_title('neuromorphic image [original]')
