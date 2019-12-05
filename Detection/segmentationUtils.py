@@ -60,11 +60,10 @@ class segmentationUtils:
         markers = cv.watershed(img2,markers)
         img2[markers == -1] = [255,0,0]
 
-        detections = segmentationUtils.makeRectDetection(markers)
-        if len(detections) < 5:
-            imagem = segmentationUtils.drawRect(imagem,detections)
-
-        return imagem, markers
+        detections = segmentationUtils.makeRectDetection(markers)        
+        imagem = segmentationUtils.drawRect(imagem,detections)
+        detections = segmentationUtils.getCoordinatesFromPoints(detections)
+        return imagem, markers, detections
 
     '''
     this method was make in order to receive a mask from multiple detection using the watershed method
@@ -90,8 +89,11 @@ class segmentationUtils:
             height = lastY - y 
             objects.append([x, y, width, height])
 
-        objects = segmentationUtils.getPointsFromCoordinates(objects)
-        objects = segmentationUtils.filterDetections(objects)
+        if len(objects)<5:
+            objects = segmentationUtils.getPointsFromCoordinates(objects)
+            objects = segmentationUtils.filterDetections(objects)
+        else:
+            objects = []
 
         return objects
 
