@@ -40,10 +40,10 @@ class segmentationUtils:
         
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
-        kernel = np.ones((3,3),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 1)
+        kernel = np.ones((1,1),np.uint8)
+        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 1)
         # sure background area
-        sure_bg = cv.dilate(opening,kernel,iterations=20)
+        sure_bg = cv.dilate(opening,kernel,iterations=5)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
         ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
@@ -187,8 +187,8 @@ class segmentationUtils:
     def watershed_demo():
         neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
-        watershedNeuromorphicImage, neuromorphicMask = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
-        watershedStandardImage, standardMask = segmentationUtils.watershed(standardImage)
+        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
+        watershedStandardImage, standardMask,standardDetection = segmentationUtils.watershed(standardImage)
         
 
         f, axarr = plt.subplots(2,2)
