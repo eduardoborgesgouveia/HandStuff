@@ -13,7 +13,7 @@ path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_file
 
 t, x, y, p = aedatUtils.loadaerdat(path)
 
-tI=50000 #50 ms
+tI=100000 #50 ms
 
 totalImages = []
 totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
@@ -49,7 +49,7 @@ for f in totalImages:
 
 
     
-    plt.pause(0.01)
+    plt.pause(0.5)
     plt.draw()
 
 

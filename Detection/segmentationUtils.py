@@ -3,6 +3,8 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 from iou import iou
+from classifierTools import classifierTools
+from skimage.morphology import erosion, dilation, opening, closing, white_tophat,square,convex_hull_image
 
 class segmentationUtils:
 
@@ -35,9 +37,7 @@ class segmentationUtils:
                 img = cv.blur(img, (5, 5))
             elif opt[i].__contains__('median'):
                 img = cv.medianBlur(img, 5)
-        
-       
-        
+                
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
         kernel = np.ones((1,1),np.uint8)
@@ -168,11 +168,12 @@ class segmentationUtils:
     def getCoordinatesFromPoints(detections):
         objects = []
         for i in range(len(detections)):
-            x1 = detections[i][0]
-            y1 = detections[i][1]
-            width = detections[i][2] - x1
-            lenght = detections[i][3] - y1
-            objects.append([x1, y1, width, lenght])
+            if detections[i][2] - detections[i][0] > 1 and detections[i][3] - detections[i][1] > 1:
+                x1 = detections[i][0]
+                y1 = detections[i][1]
+                width = detections[i][2] - x1
+                lenght = detections[i][3] - y1
+                objects.append([x1, y1, width, lenght])
         return objects
 
 
@@ -185,18 +186,22 @@ class segmentationUtils:
         - 1 neuromorphic image (watershed segmentation + filter of avg and median)
     '''
     def watershed_demo():
+        dim = (128,128)
         neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
-        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
         watershedStandardImage, standardMask,standardDetection = segmentationUtils.watershed(standardImage)
+        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
         
 
-        f, axarr = plt.subplots(2,2)
+        f, axarr = plt.subplots(2,3)
         axarr[0,0].set_title('neuromorphic image [original]')
         axarr[0,0].imshow(neuromorphicImage)
 
         axarr[0,1].set_title('neuromorphic - mask')
         axarr[0,1].imshow(neuromorphicMask)
+
+        axarr[0,2].set_title('croped bounding box')
+        axarr[0,2].imshow(neuromorphicImage[neuromorphicDetection[0][0]+1:neuromorphicDetection[0][0]+neuromorphicDetection[0][2] , neuromorphicDetection[0][1]+1:neuromorphicDetection[0][1]+neuromorphicDetection[0][3]])
 
         axarr[1,0].set_title('standard image [original]')
         axarr[1,0].imshow(standardImage)
@@ -204,7 +209,25 @@ class segmentationUtils:
         axarr[1,1].set_title('standard - mask')
         axarr[1,1].imshow(standardMask)
 
+        axarr[1,2].set_title('croped bounding box')
+        axarr[1,2].imshow(standardImage[standardDetection[0][0]+(round(0.01*standardImage.shape[0])):standardDetection[0][0]+standardDetection[0][2] , standardDetection[0][1]+(round(0.01*standardImage.shape[0])):standardDetection[0][1]+standardDetection[0][3]])
         
+
+        # model = classifierTools.openModel('model/model.json',
+		# 					              'model/model.h5')
+
+
+        # crop_img = cv.resize(neuromorphicImage, dim, interpolation = cv.INTER_AREA)
+        # crop_img = np.squeeze(crop_img,axis=2)
+        # crop_img.reshape(1, 128, 128, 1)
+        # # if crop_img.shape[2] != None and crop_img.shape[2] != 3:
+        # #     crop_img = np.expand_dims(crop_img, axis=2)
+        # # if crop_img.shape[0] != 1:
+        # #     crop_img = np.expand_dims(crop_img, axis=0)
+        # resp, objectSet = classifierTools.predictObject(crop_img, model)
+        # predict = objectSet[resp][1]
+        # plt.text(detection[a][0], detection[a][1], predict, fontsize=12)
+
         plt.show()
 
 

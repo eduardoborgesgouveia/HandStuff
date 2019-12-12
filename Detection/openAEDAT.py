@@ -5,6 +5,8 @@ import struct
 import numpy as np
 from scipy import  signal
 from sklearn.model_selection import train_test_split
+from keras.models import model_from_json
+
 
 class aedatUtils:
 
@@ -218,4 +220,3 @@ class aedatUtils:
                 return totalImages, labels
         
         
-

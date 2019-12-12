@@ -15,7 +15,7 @@ path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard f
 
 video = cv.VideoCapture(path)
 
-plotMask = True
+plotMask = False
 
 if plotMask:
     fig, axarr = plt.subplots(1,2)
@@ -31,7 +31,7 @@ while(video.isOpened()):
     if frame.shape != 0:
         frame = cv.rotate(frame, cv.ROTATE_90_CLOCKWISE)
         watershedImage, mask, detection = segmentationUtils.watershed(frame)
-        
+
         if plotMask:
             axarr[0].imshow(watershedImage)
             axarr[1].imshow(mask)
