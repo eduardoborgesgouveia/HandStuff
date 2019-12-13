@@ -28,8 +28,13 @@ else:
     fig,axarr = plt.subplots(1)
     handle = None
 
+rects = []
 
 for f in totalImages:
+    
+    for s in range(len(rects)):
+        rects[s].set_visible(False)
+
     watershedImage, mask, detection = segmentationUtils.watershed(f,'--avg --median --neuromorphic')
     watershedImage = watershedImage.astype(np.uint8)
     
@@ -41,15 +46,17 @@ for f in totalImages:
             handle = plt.imshow(np.dstack([watershedImage,watershedImage,watershedImage]))
         else:
             handle.set_data(np.dstack([watershedImage,watershedImage,watershedImage]))
-            # for j in range(len(detection)):
-            #     # Create a Rectangle patch
-            #     rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-            #     # Add the patch to the Axes
-            #     axarr.add_patch(rect)
 
 
-    
-    plt.pause(0.5)
+    for j in range(len(detection)):
+        # Create a Rectangle patch
+        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+        rects.append(rect)
+        # Add the patch to the Axes
+        plt.gca().add_patch(rect)
+
+
+    plt.pause(0.01)
     plt.draw()
 
 
