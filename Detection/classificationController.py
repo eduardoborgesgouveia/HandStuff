@@ -7,9 +7,12 @@ from classifierTools import classifierTools
 import matplotlib.animation as animation
 from segmentationUtils import segmentationUtils
 import matplotlib.patches as patches
-
+import scipy as scipy
 def main():
         
+    groupValue = 3 
+    agroup = False
+
     # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mug.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
     path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/key.aedat'
@@ -32,7 +35,7 @@ def main():
     }
     off_set_text = 3
     plotMask = False
-
+    detections = []
     if plotMask:
         fig, axarr = plt.subplots(1,2)
         textPlot = plt.text(0,0,"")
@@ -46,14 +49,16 @@ def main():
     count = []
     rects = []
     texts = []
+    framesCount = 0
     for f in totalImages:
 
-        cleanFigure(rects,texts)
+        
 
         watershedImage, mask, detection = segmentationUtils.watershed(f,'--avg --median --neuromorphic')
         watershedImage = watershedImage.astype(np.uint8)
-        
-        
+       
+       
+
         if plotMask:
             axarr[0].imshow(np.dstack([watershedImage,watershedImage,watershedImage]))
             axarr[1].imshow(mask)
@@ -63,21 +68,46 @@ def main():
             else:
                 handle.set_data(np.dstack([watershedImage,watershedImage,watershedImage]))
 
-
-        #draw the bounding boxes and write the classification
-        for j in range(len(detection)):
-            imageRoi = getROI(detection[j],watershedImage)
-            predict = classify(imageRoi,model)
-            #patches receive (y,x), length and width
-            rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-            plt.gca().add_patch(rect)
-            text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font)
-            #the append is necessary to make the predictions not visible after the refresh of the frame
-            rects.append(rect)
-            texts.append(text)
-        
+        if agroup:
+            if detection:
+                framesCount = framesCount + 1
+                for s in range(len(detection)):
+                    detections.append(detection[s])
+            if framesCount >= groupValue and detections:
+                cleanFigure(rects,texts)
+                finalDetection = segmentationUtils.getPointsFromCoordinates(detections)
+                finalDetection = segmentationUtils.filterDetections(finalDetection)
+                finalDetection = segmentationUtils.getCoordinatesFromPoints(finalDetection)
+                detection = finalDetection[:]
+                #draw the bounding boxes and write the classification
+                for j in range(len(detection)):
+                    imageRoi = getROI(detection[j],watershedImage)
+                    predict = classify(imageRoi,model)
+                    #patches receive (y,x), length and width
+                    rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                    plt.gca().add_patch(rect)
+                    text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font)
+                    #the append is necessary to make the predictions not visible after the refresh of the frame
+                    rects.append(rect)
+                    texts.append(text)
+                framesCount = 0
+                detections = []
+        else:
+            cleanFigure(rects,texts)
+            for j in range(len(detection)):
+                imageRoi = getROI(detection[j],watershedImage)
+                predict = classify(imageRoi,model)
+                #patches receive (y,x), length and width
+                rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                plt.gca().add_patch(rect)
+                text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font)
+                #the append is necessary to make the predictions not visible after the refresh of the frame
+                rects.append(rect)
+                texts.append(text)
+    
         plt.pause(0.01)
         plt.draw()
+        
 
 
 def cleanFigure(rects,texts):
