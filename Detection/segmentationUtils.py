@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from iou import iou
 from classifierTools import classifierTools
 from skimage.morphology import erosion, dilation, opening, closing, white_tophat,square,convex_hull_image
+from filterUtils import filterUtils
 
 class segmentationUtils:
 
@@ -31,17 +32,11 @@ class segmentationUtils:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
-           
-        for i in range(len(opt)):
-            if opt[i].__contains__('avg'):
-                img = cv.blur(img, (5, 5))
-            elif opt[i].__contains__('median'):
-                img = cv.medianBlur(img, 5)
                 
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
         kernel = np.ones((1,1),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 1)
+        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 3)
         # sure background area
         sure_bg = cv.dilate(opening,kernel,iterations=5)
         # Finding sure foreground area
@@ -88,7 +83,7 @@ class segmentationUtils:
             width = lastX - x
             height = lastY - y 
             objects.append([x, y, width, height])
-
+        print(len(objects))
         if len(objects)<5:
             objects = segmentationUtils.getPointsFromCoordinates(objects)
             objects = segmentationUtils.filterDetections(objects)
@@ -194,10 +189,15 @@ class segmentationUtils:
         off_set_text = 3
 
         dim = (128,128)
+        
         neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
         watershedStandardImage, standardMask,standardDetection = segmentationUtils.watershed(standardImage)
-        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection = segmentationUtils.watershed(neuromorphicImage,'--avg --median --neuromorphic')
+        
+        neuromorphicImage = filterUtils.avg(neuromorphicImage)
+        neuromorphicImage = filterUtils.median(neuromorphicImage)
+
+        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection = segmentationUtils.watershed(neuromorphicImage,'--neuromorphic')
         
       
         f, axarr = plt.subplots(2,3)
@@ -238,6 +238,5 @@ class segmentationUtils:
 
         plt.show()
 
-
-
-       
+if __name__ == "__main__":
+	segmentationUtils.watershed_demo()

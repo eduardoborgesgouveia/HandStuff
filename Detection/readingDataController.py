@@ -16,9 +16,9 @@ t, x, y, p = aedatUtils.loadaerdat(path)
 tI=100000 #50 ms
 
 totalImages = []
-totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
+totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI,False)
 
-plotMask = False
+plotMask = True
 
 if plotMask:
     fig, axarr = plt.subplots(1,2)
@@ -35,7 +35,10 @@ for f in totalImages:
     for s in range(len(rects)):
         rects[s].set_visible(False)
 
-    watershedImage, mask, detection = segmentationUtils.watershed(f,'--avg --median --neuromorphic')
+    f = filterUtils.avg(f)
+    f = filterUtils.median(f)
+    
+    watershedImage, mask, detection = segmentationUtils.watershed(f,'--neuromorphic')
     watershedImage = watershedImage.astype(np.uint8)
     
     if plotMask:
@@ -56,7 +59,7 @@ for f in totalImages:
         plt.gca().add_patch(rect)
 
 
-    plt.pause(0.01)
+    plt.pause(0.05)
     plt.draw()
 
 

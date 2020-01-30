@@ -4,9 +4,10 @@ import sys
 import struct
 import numpy as np
 from scipy import  signal
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from keras.models import model_from_json
-
+from filterUtils import filterUtils
 
 class aedatUtils:
 
@@ -98,32 +99,45 @@ class aedatUtils:
 
 
 
-    def matrix_active(x, y, pol):
+    def matrix_active(x, y, pol,filtered=None):
     
         matrix = np.zeros([128, 128]) # Cria uma matriz de zeros 128x128 onde serão inseridos os eventos
         pol = (pol - 0.5) # Os eventos no array de Polaridade passam a ser -0.5 ou 0.5
         
         if(len(x) == len(y)): # Verifica se o tamanho dos arrays são iguais   
             for i in range(len(x)):
-                matrix[x[i], y[i]] += pol[i] # insere os eventos dentro da matriz de zeros
+                val = 0
+                #se a flag do filtro for true. Os eventos serão somados
+                #para que eles sejam normalizados pelo maior valor de um acumulo de eventos
+                #e depois retirados por um limiar de ~30%
+                if filtered == None or filtered == False:
+                    val = pol[i]
+                elif filtered == True:
+                    val = 1
+                matrix[x[i], y[i]] += val # insere os eventos dentro da matriz de zeros
         else:
             print("error x,y missmatch")    
 
-        idx = 0
-        limiar = 0.5
-        for i in matrix: # Limita os eventos em dentro do limiar
-            for j, v in enumerate(i):
-                if v > limiar:
-                    matrix[idx][j] = limiar
-                if v < (limiar-1):
-                    matrix[idx][j] = (limiar-1)
-            idx += 1
-        if limiar != 1:
-            matrix = (matrix * 255) + 127.5 # Normaliza a matriz para 8bits -> 0 - 255
-            # matrix[matrix < 128] = 1
-            # matrix[matrix > 128] = 1
-            # matrix[matrix == 128] = 0
-        
+        if filtered:
+            maxValue = matrix.max()
+            matrix = matrix/maxValue
+            matrix[matrix <= 0.1] = 0
+            #matrix[np.logical_and(matrix > 0.1, matrix <= 0.3)] = 0.1
+            matrix[matrix > 0.3] = 255
+            #matrix = (matrix * 255) # Normaliza a matriz para 8bits -> 0 - 255
+        else:
+            idx = 0
+            limiar = 0.5
+            for i in matrix: # Limita os eventos em dentro do limiar
+                for j, v in enumerate(i):
+                    if v > limiar:
+                        matrix[idx][j] = limiar
+                    if v < (limiar-1):
+                        matrix[idx][j] = (limiar-1)
+                idx += 1
+            if limiar != 1:
+                matrix = (matrix * 255) + 127.5 # Normaliza a matriz para 8bits -> 0 - 255
+            
         return matrix
 
     def getFrameTimeBased(timeArray, polArray, xPosArray, yPosArray,timeStamp, Ti):
@@ -137,7 +151,7 @@ class aedatUtils:
         img = rotateMatrix(img)
         return img
 
-    def getFramesTimeBased(timeArray, polArray, xPosArray, yPosArray,timeStamp):
+    def getFramesTimeBased(timeArray, polArray, xPosArray, yPosArray,timeStamp,filtered=None):
         totalImages = []
         i, aux = 0, 0
         images = []
@@ -147,7 +161,7 @@ class aedatUtils:
             y2 = yPosArray[aux : aux + len(t2)]
             p2 = polArray[aux : aux + len(t2)]
             aux += len(t2)
-            img = aedatUtils.matrix_active(x2, y2, p2)
+            img = aedatUtils.matrix_active(x2, y2, p2,filtered)
             rotacao = aedatUtils.rotateMatrix(img)
             images.append(img)	
             i += timeStamp
@@ -182,6 +196,60 @@ class aedatUtils:
 
         return mat
     
+
+    
+
+    def loadDataDemo():
+        #read data
+        path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/multi_objects_2.aedat'
+        t, x, y, p = aedatUtils.loadaerdat(path)
+        promediar = False
+        tI=100000 #10 ms
+        # tI=10000 #10 ms
+
+        totalImages = []
+        totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI,False)
+
+        #plot
+        fig,axarr = plt.subplots(1)
+        handle = None
+        if promediar == True:
+            maxProMediacao = 10
+            indexProMediacao = 0
+            imagemPromediada = np.zeros([128,128])
+            for f in totalImages:
+                f = f.astype(np.uint8)
+                f[f==0] = 1
+                f[f==255] = 1
+                f[f==127] = 0
+                imagemPromediada += f
+                indexProMediacao += 1
+                if indexProMediacao == 10:
+                    indexProMediacao = 0
+                    imagemPromediada = imagemPromediada/10
+                    imagemPromediada = imagemPromediada*255
+                    imagemPromediada = imagemPromediada.astype(np.uint8)
+                    if handle is None:
+                        handle = plt.imshow(np.dstack([imagemPromediada,imagemPromediada,imagemPromediada]))
+                        #handle = plt.imshow(imagemPromediada)
+                    else:
+                        handle = plt.imshow(np.dstack([imagemPromediada,imagemPromediada,imagemPromediada]))
+                        #handle.set_data(imagemPromediada)
+                    imagemPromediada = np.zeros([128,128])
+                    plt.pause(0.01)
+                    plt.draw()
+        else:
+            for f in totalImages:
+                f = f.astype(np.uint8)
+                #f = filterUtils.sobelFilter(f)
+                if handle is None:
+                    handle = plt.imshow(np.dstack([f,f,f]))
+                else:
+                    handle = plt.imshow(np.dstack([f,f,f]))
+
+                plt.pause(0.01)
+                plt.draw()
+       
 
 
     def main(objClass=None, tI=50000, split=False, size=0.20):
@@ -220,3 +288,5 @@ class aedatUtils:
                 return totalImages, labels
         
         
+if __name__ == "__main__":
+	aedatUtils.loadDataDemo()
