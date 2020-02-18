@@ -1,4 +1,5 @@
-
+import copy
+import math
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -12,13 +13,12 @@ class segmentationUtils:
     '''
     parameters:
         imagem - desired image
+        minimumSizeBox - threshold for the size of the bounding box (in percentage)
         options - optional parameter who is a string with the desired options.
             avaiable options:
-                '--avg' - apply average filter to image
-                '--median' - apply median filter to image
                 '--neuromorphic' - is the declaration of neuromorphic image or else is a RGB image
     '''
-    def watershed(imagem,options=None):
+    def watershed(imagem,options=None,minimumSizeBox = 2,smallBBFilter = True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter=True):
 
         opt = []
         if options != None:
@@ -55,7 +55,7 @@ class segmentationUtils:
         markers = cv.watershed(img2,markers)
         img2[markers == -1] = [255,0,0]
 
-        detections = segmentationUtils.makeRectDetection(markers)        
+        detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)        
         #imagem = segmentationUtils.drawRect(imagem,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
         return imagem, markers, detections
@@ -64,7 +64,7 @@ class segmentationUtils:
     this method was make in order to receive a mask from multiple detection using the watershed method
     and make a rectangular bounding box ao redor of the detections.
     '''
-    def makeRectDetection(mask):
+    def makeRectDetection(mask,minimumSizeBox=2,smallBBFilter=True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter = True):
         #make sure that the edges of the image is not being marked
         mask[0,:] = 1
         mask[:,0] = 1
@@ -82,36 +82,55 @@ class segmentationUtils:
             lastY = max(positions[1])
             width = lastX - x
             height = lastY - y 
-            objects.append([x, y, width, height])
-        print(len(objects))
-        if len(objects)<5:
-            objects = segmentationUtils.getPointsFromCoordinates(objects)
-            objects = segmentationUtils.filterDetections(objects)
-        else:
-            objects = []
+            #if the area of the detection is bigger then 20% of the image size (128 * 128 = 16384)
+            #so if the bb area is larger then 0.2*16384 the bb need to be keep. Otherwise I ignore then
+            if ((smallBBFilter) and (width * height)>((minimumSizeBox/100.0)*(mask.shape[0]*mask.shape[1]))):    
+                objects.append([x, y, width, height])
+            elif (not smallBBFilter):
+                objects.append([x, y, width, height])
 
+        print(len(objects))
+        
+        objects = segmentationUtils.getCentroid(objects)
+        objects = segmentationUtils.getPointsFromCoordinates(objects)
+        objects = segmentationUtils.filterDetections(objects,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
+        
         return objects
 
+    def getCentroid(coordinates):
+        for i in range(len(coordinates)):
+            Cxa = coordinates[i][0] + coordinates[i][2]/2
+            Cya = coordinates[i][1] + coordinates[i][3]/2
+            coordinates[i].append(Cxa)
+            coordinates[i].append(Cya)
+        return coordinates
 
-    def filterDetections(detections):
+    def filterDetections(detections,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter = True):
         flag = True
         retorno = detections[:]
         while(flag):
-            flag, pos = segmentationUtils.checkIntersec(retorno)
+            flag, pos = segmentationUtils.checkIntersec(retorno,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
             retorno = segmentationUtils.mergeDetections(retorno,pos)
         return retorno
 
-    def checkIntersec(coordinates):
+    def checkIntersec(coordinates,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter = True):
         count = len(coordinates)
         register = 0
-        for i in range(len(coordinates)):
-            for j in range(len(coordinates)):
-                if j > i:
-                    area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
-                    if area > 0.0 and area != 1.0:
-                        return True, [i,j]
+        if (centroidDistanceFilter or mergeOverlapingDetectionsFilter):
+            for i in range(len(coordinates)):
+                for j in range(len(coordinates)):
+                    if j > i:
+                        area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
+                        distance = segmentationUtils.getDistance(coordinates[i],coordinates[j])
+                        if (area > 0.0 and area != 1.0 and mergeOverlapingDetectionsFilter) or (centroidDistanceFilter and distance < 50):
+                            return True, [i,j]
                     
         return False, None
+
+    def getDistance(boxA, boxB):
+        distance = math.sqrt(((boxA[4]-boxB[4])**2)+((boxA[5]-boxB[5])**2))
+        print('distance: '+ str(distance))
+        return distance
 
     def drawRect(img, detections,lineWidth=None):
         bbColor = 8
@@ -134,8 +153,8 @@ class segmentationUtils:
     '''
     def mergeDetections(detections,pos):
         retorno = detections
-        if pos != None:
-            coordinates = detections[:]
+        if (pos != None):
+            coordinates = copy.deepcopy(detections)
             retorno = []
             X1 = max(coordinates[pos[0]][0],coordinates[pos[0]][2],coordinates[pos[1]][0],coordinates[pos[1]][2])
             X2 = min(coordinates[pos[0]][0],coordinates[pos[0]][2],coordinates[pos[1]][0],coordinates[pos[1]][2])
@@ -144,11 +163,13 @@ class segmentationUtils:
             width = X1 - X2        
             height = Y1 - Y2
 
+            coordWithCentroid = segmentationUtils.getCentroid([[X2, Y2, width, height]])
+
             coordinates.remove(detections[pos[0]])
             coordinates.remove(detections[pos[1]])
 
             retorno = coordinates
-            retorno.append([X2, Y2, X1, Y1])                   
+            retorno.append([X2, Y2, X1, Y1, coordWithCentroid[0][4],coordWithCentroid[0][5]])                   
         return retorno
 
     def getPointsFromCoordinates(detections):
@@ -158,7 +179,7 @@ class segmentationUtils:
             y1 = detections[i][1]
             x2 = detections[i][0] + detections[i][2]
             y2 = detections[i][1] + detections[i][3]
-            objects.append([x1, y1, x2, y2])
+            objects.append([x1, y1, x2, y2, detections[i][4], detections[i][5]])
         return objects
     def getCoordinatesFromPoints(detections):
         objects = []
@@ -168,7 +189,7 @@ class segmentationUtils:
                 y1 = detections[i][1]
                 width = detections[i][2] - x1
                 lenght = detections[i][3] - y1
-                objects.append([x1, y1, width, lenght])
+                objects.append([x1, y1, width, lenght, detections[i][4], detections[i][5]])
         return objects
 
 

@@ -155,7 +155,8 @@ class aedatUtils:
         totalImages = []
         i, aux = 0, 0
         images = []
-        while (i + timeStamp) < timeArray[-1]:
+        
+        while (i + timeStamp) < abs(timeArray[-1]):
             t2 = timeArray[(timeArray > i) & (timeArray <= i + timeStamp)]
             x2 = xPosArray[aux : aux + len(t2)]
             y2 = yPosArray[aux : aux + len(t2)]

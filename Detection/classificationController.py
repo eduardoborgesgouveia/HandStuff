@@ -10,6 +10,7 @@ import matplotlib.patches as patches
 import scipy as scipy
 from filterUtils import filterUtils
 import copy 
+import os
 def main():
         
     groupValue = 3 
@@ -19,21 +20,30 @@ def main():
     filterPopCountFlag = False
     plotMask = False
 
-    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mug.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/valocidade_1.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/velocidade_1_e_2_experimento_3.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/velocidade_3_experimento_2.aedat'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Stiletto.aedat'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Scissor.aedat'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Pencil.aedat'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mouse.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mug.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Box.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/key.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/four_objects_4.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/four_objects_3.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/one_object.aedat'
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/one_object.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/key_2.aedat'
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/multi_objects_2.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/multi_objects_2.aedat'
 
     model = classifierTools.openModel('model/model.json',
                                         'model/model.h5')
 
     t, x, y, p = aedatUtils.loadaerdat(path)
 
-    tI=50000 #50 ms
+    tI=50000 #100 ms
 
     totalImages = []
     totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
@@ -58,8 +68,15 @@ def main():
     rects = []
     texts = []
     framesCount = 0
+    framesWithRectDrawned = []
+    detectionsClassified = []
+    g = 0
+    #filmaker(totalImages)
     for f in totalImages:
-
+        # f = f.astype(np.uint8)
+        # framesWithRectDrawned.append(np.dstack([f,f,f]))
+    
+        detectionsClassified = []
         f = f.astype(np.uint8)
         imagem = copy.deepcopy(f)
         if filterPopCountFlag:
@@ -70,13 +87,13 @@ def main():
             imagem = filterUtils.median(imagem)
 
         
-        watershedImage, mask, detection = segmentationUtils.watershed(imagem,'--neuromorphic')
+        watershedImage, mask, detection = segmentationUtils.watershed(imagem,'--neuromorphic',minimumSizeBox=0.5,smallBBFilter=True,centroidDistanceFilter = True, mergeOverlapingDetectionsFilter = True)
         watershedImage = watershedImage.astype(np.uint8)
 
 
         if plotMask:
-            axarr[0].imshow(np.dstack([f,f,f]))
-            axarr[1].imshow(mask)
+            axarr[1].imshow(np.dstack([f,f,f]))
+            axarr[0].imshow(mask)
         else:
             if handle is None:
                 #handle = plt.imshow(np.dstack([imagem,imagem,imagem]))                
@@ -114,20 +131,34 @@ def main():
         else:
             cleanFigure(rects,texts)
             for j in range(len(detection)):
+                imageRoi = getROI(detection[j],f)
+                predict = classify(imageRoi,model)
                 if predictFlag:
-                    imageRoi = getROI(detection[j],f)
-                    predict = classify(imageRoi,model)
+                    # imageRoi = getROI(detection[j],f)
+                    # predict = classify(imageRoi,model)
                     text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
                     texts.append(text)
                 if rectFlag:
-                    #patches receive (y,x), length and width
-                    rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-                    plt.gca().add_patch(rect)
-                    #the append is necessary to make the predictions not visible after the refresh of the frame
-                    rects.append(rect)
+                    print(predict)
+                    if predict == 'Calculator':
+                        #patches receive (y,x), length and width
+                        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                        plt.gca().add_patch(rect)
+                        #the append is necessary to make the predictions not visible after the refresh of the frame
+                        rects.append(rect)
+                        detectionsClassified.append(detection[j])
+
     
-        plt.pause(0.01)
+        plt.pause(tI/1000000)
+        #plt.pause(250000/1000000)
         plt.draw()
+        aux = segmentationUtils.getPointsFromCoordinates(detectionsClassified)
+        f = segmentationUtils.drawRect(np.dstack([f,f,f]),aux)
+        framesWithRectDrawned.append(f)
+        g = g+1
+    #filmaker(framesWithRectDrawned)
+    
+    filmaker(framesWithRectDrawned,'video_2_1.avi')    
         
 
 
@@ -150,6 +181,18 @@ def classify(image,model):
     resp, objectSet = classifierTools.predictObject(image, model)
     predict = objectSet[resp][1]
     return predict
+
+def filmaker(imageVector, name="video.avi"):
+    #Cria um vídeo no formato .avi juntando todos os frames.
+    video_name = name
+    images = imageVector
+    height, width, layers = (128,128,3)
+    fourcc = cv.VideoWriter_fourcc(*'mpeg') 
+    video = cv.VideoWriter(video_name, fourcc, 10, (width,height))
+    for image in images:
+       video.write(image)
+    cv.destroyAllWindows()
+    video.release()
 
 if __name__ == "__main__":
 	main()
