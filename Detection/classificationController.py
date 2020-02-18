@@ -71,10 +71,7 @@ def main():
     framesWithRectDrawned = []
     detectionsClassified = []
     g = 0
-    #filmaker(totalImages)
     for f in totalImages:
-        # f = f.astype(np.uint8)
-        # framesWithRectDrawned.append(np.dstack([f,f,f]))
     
         detectionsClassified = []
         f = f.astype(np.uint8)
@@ -131,34 +128,24 @@ def main():
         else:
             cleanFigure(rects,texts)
             for j in range(len(detection)):
-                imageRoi = getROI(detection[j],f)
-                predict = classify(imageRoi,model)
                 if predictFlag:
-                    # imageRoi = getROI(detection[j],f)
-                    # predict = classify(imageRoi,model)
+                    imageRoi = getROI(detection[j],f)
+                    predict = classify(imageRoi,model)
                     text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
                     texts.append(text)
-                if rectFlag:
-                    print(predict)
-                    if predict == 'Calculator':
-                        #patches receive (y,x), length and width
-                        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-                        plt.gca().add_patch(rect)
-                        #the append is necessary to make the predictions not visible after the refresh of the frame
-                        rects.append(rect)
-                        detectionsClassified.append(detection[j])
+                if rectFlag:    
+                    #patches receive (y,x), length and width
+                    rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                    plt.gca().add_patch(rect)
+                    #the append is necessary to make the predictions not visible after the refresh of the frame
+                    rects.append(rect)
+                    #detectionsClassified.append(detection[j])
 
     
         plt.pause(tI/1000000)
-        #plt.pause(250000/1000000)
         plt.draw()
-        aux = segmentationUtils.getPointsFromCoordinates(detectionsClassified)
-        f = segmentationUtils.drawRect(np.dstack([f,f,f]),aux)
-        framesWithRectDrawned.append(f)
-        g = g+1
-    #filmaker(framesWithRectDrawned)
     
-    filmaker(framesWithRectDrawned,'video_2_1.avi')    
+    
         
 
 
