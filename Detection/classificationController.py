@@ -19,6 +19,7 @@ def main():
     rectFlag = True
     filterPopCountFlag = False
     plotMask = False
+    flagCloserToCenter = True
 
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/valocidade_1.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/velocidade_1_e_2_experimento_3.aedat'
@@ -43,7 +44,7 @@ def main():
 
     t, x, y, p = aedatUtils.loadaerdat(path)
 
-    tI=50000 #100 ms
+    tI=50000 #50 ms
 
     totalImages = []
     totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
@@ -113,33 +114,60 @@ def main():
                 #draw the bounding boxes and write the classification
                 for j in range(len(detection)):
                     if predictFlag:
-                        imageRoi = getROI(detection[j],f)
-                        predict = classify(imageRoi,model)
-                        text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
-                        texts.append(text)
+                        if flagCloserToCenter and (detection[j][7] == 'closerToCenter'):
+                            imageRoi = getROI(detection[j],f)
+                            predict = classify(imageRoi,model)
+                            text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
+                            texts.append(text)
+                        elif(not flagCloserToCenter):
+                            imageRoi = getROI(detection[j],f)
+                            predict = classify(imageRoi,model)
+                            text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
+                            texts.append(text)
                     if rectFlag:
-                        #patches receive (y,x), length and width
-                        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-                        plt.gca().add_patch(rect)
-                        #the append is necessary to make the predictions not visible after the refresh of the frame
-                        rects.append(rect)
+                        if flagCloserToCenter and (detection[j][7] == 'closerToCenter'):
+                            #patches receive (y,x), length and width
+                            rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                            plt.gca().add_patch(rect)
+                            #the append is necessary to make the predictions not visible after the refresh of the frame
+                            rects.append(rect)
+                        elif(not flagCloserToCenter):
+                            #patches receive (y,x), length and width
+                            rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                            plt.gca().add_patch(rect)
+                            #the append is necessary to make the predictions not visible after the refresh of the frame
+                            rects.append(rect)
                 framesCount = 0
                 detections = []
         else:
             cleanFigure(rects,texts)
             for j in range(len(detection)):
                 if predictFlag:
-                    imageRoi = getROI(detection[j],f)
-                    predict = classify(imageRoi,model)
-                    text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
-                    texts.append(text)
-                if rectFlag:    
-                    #patches receive (y,x), length and width
-                    rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-                    plt.gca().add_patch(rect)
-                    #the append is necessary to make the predictions not visible after the refresh of the frame
-                    rects.append(rect)
-                    #detectionsClassified.append(detection[j])
+                    if flagCloserToCenter and (detection[j][7] == 'closerToCenter'):
+                        imageRoi = getROI(detection[j],f)
+                        predict = classify(imageRoi,model)
+                        text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
+                        texts.append(text)
+                    elif(not flagCloserToCenter):
+                        imageRoi = getROI(detection[j],f)
+                        predict = classify(imageRoi,model)
+                        text = plt.gca().text(detection[j][1], detection[j][0]-off_set_text, predict, fontdict = font,bbox=dict(facecolor='red', alpha=1))
+                        texts.append(text)
+                if rectFlag:
+                    if flagCloserToCenter and (detection[j][7] == 'closerToCenter'):
+                        #patches receive (y,x), length and width
+                        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                        plt.gca().add_patch(rect)
+                        #the append is necessary to make the predictions not visible after the refresh of the frame
+                        rects.append(rect)
+                        #detectionsClassified.append(detection[j])
+                    elif(not flagCloserToCenter):
+                        #patches receive (y,x), length and width
+                        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
+                        plt.gca().add_patch(rect)
+                        #the append is necessary to make the predictions not visible after the refresh of the frame
+                        rects.append(rect)
+                        #detectionsClassified.append(detection[j])
 
     
         plt.pause(tI/1000000)

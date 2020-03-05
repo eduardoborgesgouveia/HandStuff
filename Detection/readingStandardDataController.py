@@ -10,8 +10,8 @@ import matplotlib.patches as patches
 
 def main():
             
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/multi_objects.mp4'
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/four_objects.mp4'
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/multi_objects.mp4'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/four_objects.mp4'
 
 
 
@@ -34,7 +34,7 @@ def main():
         ret, frame = video.read()
         if frame.shape != 0:
             frame = cv.rotate(frame, cv.ROTATE_90_CLOCKWISE)
-            watershedImage, mask, detection = segmentationUtils.watershed(frame)
+            watershedImage, mask, detection = segmentationUtils.watershed(frame,minimumSizeBox=0.5,smallBBFilter=True,centroidDistanceFilter = True, mergeOverlapingDetectionsFilter = True)
 
             if plotMask:
                 axarr[0].imshow(watershedImage)

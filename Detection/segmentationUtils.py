@@ -10,6 +10,7 @@ from filterUtils import filterUtils
 
 class segmentationUtils:
 
+    
     '''
     parameters:
         imagem - desired image
@@ -21,6 +22,8 @@ class segmentationUtils:
     def watershed(imagem,options=None,minimumSizeBox = 2,smallBBFilter = True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter=True):
 
         opt = []
+        global imageDimensions 
+        imageDimensions = imagem.shape
         if options != None:
             options = "".join(options.split())
             opt = options.split('--')
@@ -94,15 +97,49 @@ class segmentationUtils:
         objects = segmentationUtils.getCentroid(objects)
         objects = segmentationUtils.getPointsFromCoordinates(objects)
         objects = segmentationUtils.filterDetections(objects,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
-        
+        objects = segmentationUtils.closerToCenter(objects)
         return objects
 
+    '''
+        INPUT -> coordinates =
+                     [x, y, width, height, centroidx, centroidy, distanceToCenter]
+        OUTPUT -> coordinates =
+                     [x, y, width, height, centroidx, centroidy, distanceToCenter, infoAboutCloserToCenter]
+    '''
+    def closerToCenter(coordinates):
+        minOfEachColumn = np.where(coordinates == np.amin(coordinates,axis=0))
+        print('coordenadas dos valores mínimos de cada coluna do array de coordenadas: ',minOfEachColumn)
+        print('array de coordenadas: ',coordinates)
+        for i in range(len(coordinates)):
+            if i == minOfEachColumn[0][6] and coordinates[minOfEachColumn[0][6]][6] < imageDimensions[0]*0.2:
+                coordinates[i].append('closerToCenter')
+            else:
+                coordinates[i].append('notCloserToCenter')
+        
+        return coordinates
+
+
+
+
+
+    '''
+        INPUT -> 
+            coordinates =
+                 [x, y, width, height]
+        OUTPUT -> 
+            coordinates =
+                [x, y, width, height, centroidx, centroidy, distanceToCenter]
+    '''
     def getCentroid(coordinates):
         for i in range(len(coordinates)):
+            distanceToCenter = 0
             Cxa = coordinates[i][0] + coordinates[i][2]/2
             Cya = coordinates[i][1] + coordinates[i][3]/2
             coordinates[i].append(Cxa)
             coordinates[i].append(Cya)
+            if(imageDimensions and imageDimensions[0] != 0 and imageDimensions[1] != 0):
+                distanceToCenter = math.sqrt(((coordinates[i][4]-imageDimensions[0]/2)**2)+((coordinates[i][5]-imageDimensions[1]/2)**2))
+            coordinates[i].append(distanceToCenter)
         return coordinates
 
     def filterDetections(detections,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter = True):
@@ -169,7 +206,7 @@ class segmentationUtils:
             coordinates.remove(detections[pos[1]])
 
             retorno = coordinates
-            retorno.append([X2, Y2, X1, Y1, coordWithCentroid[0][4],coordWithCentroid[0][5]])                   
+            retorno.append([X2, Y2, X1, Y1, coordWithCentroid[0][4],coordWithCentroid[0][5],coordWithCentroid[0][6]])                   
         return retorno
 
     def getPointsFromCoordinates(detections):
@@ -179,7 +216,7 @@ class segmentationUtils:
             y1 = detections[i][1]
             x2 = detections[i][0] + detections[i][2]
             y2 = detections[i][1] + detections[i][3]
-            objects.append([x1, y1, x2, y2, detections[i][4], detections[i][5]])
+            objects.append([x1, y1, x2, y2, detections[i][4], detections[i][5],detections[i][6]])
         return objects
     def getCoordinatesFromPoints(detections):
         objects = []
@@ -189,7 +226,7 @@ class segmentationUtils:
                 y1 = detections[i][1]
                 width = detections[i][2] - x1
                 lenght = detections[i][3] - y1
-                objects.append([x1, y1, width, lenght, detections[i][4], detections[i][5]])
+                objects.append([x1, y1, width, lenght, detections[i][4], detections[i][5],detections[i][6],detections[i][7]])
         return objects
 
 
@@ -212,6 +249,7 @@ class segmentationUtils:
         dim = (128,128)
         
         neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
+        nImage = copy.deepcopy(neuromorphicImage)
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
         watershedStandardImage, standardMask,standardDetection = segmentationUtils.watershed(standardImage)
         
@@ -223,12 +261,12 @@ class segmentationUtils:
       
         f, axarr = plt.subplots(2,3)
         axarr[0,0].set_title('neuromorphic image [original]')
-        axarr[0,0].imshow(neuromorphicImage)
+        axarr[0,0].imshow(nImage)
 
         axarr[0,1].set_title('neuromorphic - mask')
         axarr[0,1].imshow(neuromorphicMask)
 
-        crop_neuromorphic = neuromorphicImage[neuromorphicDetection[0][0]+1:neuromorphicDetection[0][0]+neuromorphicDetection[0][2] , neuromorphicDetection[0][1]+1:neuromorphicDetection[0][1]+neuromorphicDetection[0][3]]
+        crop_neuromorphic = nImage[neuromorphicDetection[0][0]+1:neuromorphicDetection[0][0]+neuromorphicDetection[0][2] , neuromorphicDetection[0][1]+1:neuromorphicDetection[0][1]+neuromorphicDetection[0][3]]
 
         axarr[0,2].set_title('croped bounding box')
         axarr[0,2].imshow(crop_neuromorphic)
