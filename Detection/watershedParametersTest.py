@@ -19,12 +19,15 @@ tI=50000 #50 ms
 totalImages = []
 totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI,True)
 
-plotMask = False
+plotMask = True
 
 if plotMask:
-    fig, axarr = plt.subplots(1,2)
+    fig, axarr = plt.subplots(1,5)
     axarr[0].set_title('neuromorphic image')
-    axarr[1].set_title('watershed mask')
+    axarr[1].set_title('opening')
+    axarr[2].set_title('foreground')
+    axarr[3].set_title('background')
+    axarr[4].set_title('markers')
 else:
     fig,axarr = plt.subplots(1)
     handle = None
@@ -33,33 +36,24 @@ rects = []
 detection = []
 
 for f in totalImages:
-    
-    # for s in range(len(rects)):
-    #     rects[s].set_visible(False)
 
-    # f = filterUtils.avg(f)
-    # f = filterUtils.median(f)
     
-    #watershedImage, mask, detection = segmentationUtils.watershed(f,'--neuromorphic')
-    # watershedImage = watershedImage.astype(np.uint8)
-    #watershedImage = f
+    watershedImage, mask, detection, opening, sure_fg, sure_bg, markers = segmentationUtils.watershed(f,'--neuromorphic')
+
     watershedImage = f.astype(np.uint8)
     if plotMask:
         axarr[0].imshow(np.dstack([watershedImage,watershedImage,watershedImage]))
-        axarr[1].imshow(mask)
+        axarr[1].imshow(opening)
+        axarr[2].imshow(sure_fg)
+        axarr[3].imshow(sure_bg)
+        axarr[4].imshow(markers)
     else:
         if handle is None:
-            handle = plt.imshow(np.dstack([watershedImage,watershedImage,watershedImage]))
+            handle = plt.imshow(np.dstack([img,img,img]))
+            # handle = plt.imshow(np.dstack([watershedImage,watershedImage,watershedImage]))
         else:
-            handle.set_data(np.dstack([watershedImage,watershedImage,watershedImage]))
-
-
-    for j in range(len(detection)):
-        # Create a Rectangle patch
-        rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
-        rects.append(rect)
-        # Add the patch to the Axes
-        plt.gca().add_patch(rect)
+            handle.set_data(np.dstack([img,img,img]))
+            # handle.set_data(np.dstack([watershedImage,watershedImage,watershedImage]))
 
 
     plt.pause(tI/1000000)

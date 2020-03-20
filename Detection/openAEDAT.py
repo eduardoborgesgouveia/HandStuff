@@ -121,10 +121,10 @@ class aedatUtils:
         if filtered:
             maxValue = matrix.max()
             matrix = matrix/maxValue
-            matrix[matrix <= 0.1] = 0
+            #matrix[matrix <= 0.5] = 0
             #matrix[np.logical_and(matrix > 0.1, matrix <= 0.3)] = 0.1
-            matrix[matrix > 0.3] = 255
-            #matrix = (matrix * 255) # Normaliza a matriz para 8bits -> 0 - 255
+            #matrix[matrix >= 0.5] = 1
+            matrix = (matrix * 255) # Normaliza a matriz para 8bits -> 0 - 255
         else:
             idx = 0
             limiar = 0.5

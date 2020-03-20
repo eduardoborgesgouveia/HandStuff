@@ -19,25 +19,25 @@ def main():
     rectFlag = True
     filterPopCountFlag = False
     plotMask = False
-    flagCloserToCenter = True
+    flagCloserToCenter = False
 
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/valocidade_1.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/velocidade_1_e_2_experimento_3.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/velocidade_3_experimento_2.aedat'
-    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Stiletto.aedat'
-    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Scissor.aedat'
-    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
-    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Pencil.aedat'
-    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mouse.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mug.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Box.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/key.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/four_objects_4.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/four_objects_3.aedat'
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/one_object.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/key_2.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/multi_objects_2.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/valocidade_1.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/velocidade_1_e_2_experimento_3.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/velocidade_3_experimento_2.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Stiletto.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Scissor.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Phone.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Pencil.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Mouse.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Mug.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Box.aedat'
+    path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/key.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/four_objects_4.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/four_objects_3.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/one_object.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/key_2.aedat'
+    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/multi_objects_2.aedat'
 
     model = classifierTools.openModel('model/model.json',
                                         'model/model.h5')
@@ -47,7 +47,7 @@ def main():
     tI=50000 #50 ms
 
     totalImages = []
-    totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
+    totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI,filtered=True)
     font = {'family': 'serif',
             'color':  'white',
             'weight': 'normal',

@@ -2,9 +2,12 @@ import os
 import cv2
 import sys
 import struct
+import copy
 import numpy as np
 from scipy import  signal
 import matplotlib.pyplot as plt
+
+
 
 class filterUtils:
 
@@ -21,7 +24,7 @@ class filterUtils:
 
         # remove noise
         if flagGaussianFilter:
-            img = aedatUtils.gaussianFilter(img)
+            img = filterUtils.gaussian(img)
 
         # convolute with proper kernels
         sobelx = cv2.Sobel(img,cv2.CV_64F,1,0,ksize=5)  # x
@@ -35,7 +38,7 @@ class filterUtils:
 
         # remove noise
         if flagGaussianFilter:
-            img = aedatUtils.gaussianFilter(img)
+            img = filterUtils.gaussian(img)
 
         # convolute with proper kernels
         laplacian = cv2.Laplacian(img,cv2.CV_64F)
@@ -91,12 +94,17 @@ class filterUtils:
 
     def main():
         #função para testar filtros nas imagens neuromórficas
-        neuromorphicImage = cv2.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
+        neuromorphicImage = cv2.imread('/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/assets/testes/pencil_1.png')
         
-        neuromorphicImage = filterUtils.binarizeNeuromorphicImage(neuromorphicImage)
+        deepCopy = copy.deepcopy(neuromorphicImage)
+        
+        #deepCopy = filterUtils.binarizeNeuromorphicImage(deepCopy)
 
-        filteredImage = filterUtils.popCountDownSample(neuromorphicImage,3)
+        #filteredImage = filterUtils.popCountDownSample(deepCopy,3)
+        filteredImage = filterUtils.sobel(deepCopy,False)
+        filteredImage = filterUtils.laplacian(filteredImage,True)
         
+
         
         fig, axarr = plt.subplots(1,2)
         textPlot = plt.text(0,0,"")
@@ -104,12 +112,16 @@ class filterUtils:
         axarr[1].set_title('filtered')
 
         
+        neuromorphicImage = neuromorphicImage/neuromorphicImage.max()
         neuromorphicImage = neuromorphicImage * 255
         neuromorphicImage = neuromorphicImage.astype(np.uint8)
         
 
         axarr[0].imshow(neuromorphicImage)
-        axarr[1].imshow(np.dstack([filteredImage,filteredImage,filteredImage]))
+        if(filteredImage.shape[2] == 3):
+            axarr[1].imshow(filteredImage)
+        else:
+            axarr[1].imshow(np.dstack([filteredImage,filteredImage,filteredImage]))
 
         plt.show()
 

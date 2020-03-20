@@ -30,23 +30,25 @@ class segmentationUtils:
 
         if opt.__contains__('neuromorphic'):
             img = imagem.astype(np.uint8)
-            img[img == 255] = 0
+            #img[img == 255] = 0
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
-                
+        
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
         kernel = np.ones((1,1),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 3)
+        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 1)
         # sure background area
+        
         sure_bg = cv.dilate(opening,kernel,iterations=5)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
-        ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
+        ret, sure_fg = cv.threshold(dist_transform,0.005*dist_transform.max(),255,0)
         # Finding unknown region
         sure_fg = np.uint8(sure_fg)
+        #sure_fg = filterUtils.median(sure_fg)
         unknown = cv.subtract(sure_bg,sure_fg)
         # Marker labelling
         ret, markers = cv.connectedComponents(sure_fg)
@@ -61,7 +63,7 @@ class segmentationUtils:
         detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)        
         #imagem = segmentationUtils.drawRect(imagem,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
-        return imagem, markers, detections
+        return imagem, markers, detections, opening, sure_fg, sure_bg,markers
 
     '''
     this method was make in order to receive a mask from multiple detection using the watershed method
@@ -107,9 +109,10 @@ class segmentationUtils:
                      [x, y, width, height, centroidx, centroidy, distanceToCenter, infoAboutCloserToCenter]
     '''
     def closerToCenter(coordinates):
-        minOfEachColumn = np.where(coordinates == np.amin(coordinates,axis=0))
-        print('coordenadas dos valores mínimos de cada coluna do array de coordenadas: ',minOfEachColumn)
-        print('array de coordenadas: ',coordinates)
+        if(len(coordinates) > 0):
+            minOfEachColumn = np.where(coordinates == np.amin(coordinates,axis=0))
+            print('coordenadas dos valores mínimos de cada coluna do array de coordenadas: ',minOfEachColumn)
+            print('array de coordenadas: ',coordinates)
         for i in range(len(coordinates)):
             if i == minOfEachColumn[0][6] and coordinates[minOfEachColumn[0][6]][6] < imageDimensions[0]*0.2:
                 coordinates[i].append('closerToCenter')
