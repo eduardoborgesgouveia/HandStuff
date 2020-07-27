@@ -1,16 +1,10 @@
-
 import numpy as np
-import cv2 as cv
 import matplotlib.pyplot as plt
-from openAEDAT import aedatUtils
-from classifierTools import classifierTools
-import matplotlib.animation as animation
-from segmentationUtils import segmentationUtils
 import matplotlib.patches as patches
-import scipy as scipy
-from filterUtils import filterUtils
 import copy 
-import os
+from openAEDAT import aedatUtils
+from segmentationUtils import segmentationUtils
+
 
 def main():
         
