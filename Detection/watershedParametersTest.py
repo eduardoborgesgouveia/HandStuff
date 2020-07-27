@@ -10,7 +10,7 @@ import matplotlib.patches as patches
 #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Mouse.aedat'
 #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
 #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/shorter records/multi_objects_2.aedat'
-path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Pencil.aedat'
+path = '/media/eduardo/9E1C99C51C99993B/Users/Samsung/Meus Documentos/Mestrado/HandStuff/Datasource/AEDAT_files/Celular.aedat'
 
 t, x, y, p = aedatUtils.loadaerdat(path)
 

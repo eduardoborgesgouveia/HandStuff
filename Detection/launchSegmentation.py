@@ -11,6 +11,7 @@ import scipy as scipy
 from filterUtils import filterUtils
 import copy 
 import os
+
 def main():
         
     groupValue = 3 
@@ -21,49 +22,25 @@ def main():
     plotMask = False
     flagCloserToCenter = False
 
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/valocidade_1.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/velocidade_1_e_2_experimento_3.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/velocidade_3_experimento_2.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Stiletto.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Scissor.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Phone.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Pencil.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Mouse.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Mug.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/standardized data/Box.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/two_objects.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/key.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/four_objects_4.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/four_objects_3.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/one_object.aedat'
-    #path = '/home/biolab-07/Documentos/Mestrado/Eduardo/HandStuff/Datasource/AEDAT_files/random data/shorter records/key_2.aedat'
+    #Caminho para o arquivo .aedat
     path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
 
-    model = classifierTools.openModel('model/model.json',
-                                        'model/model.h5')
-
+    #carregando o arquivo aedat
     t, x, y, p = aedatUtils.loadaerdat(path)
-
+    
+    #determinando o intervalo de tempo para agrupamento dos eventos
     tI=10000 #10 ms
 
+    #carregando todos os eventos agrupados em frames
     totalImages = []
-    totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI,filtered=False)
-    font = {'family': 'serif',
-            'color':  'white',
-            'weight': 'normal',
-            'size': 8,
-    }
-    off_set_text = 3
+    totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI)
+
+    #variável que armazena as bounding boxes
     detections = []
-    if plotMask:
-        fig, axarr = plt.subplots(1,2)
-        textPlot = plt.text(0,0,"")
-        axarr[0].set_title('neuromorphic image')
-        axarr[1].set_title('watershed mask')
-    else:
-        fig,axarr = plt.subplots(1)
-        textPlot = plt.text(0,0,"")
-        handle = None
+
+    fig,axarr = plt.subplots(1)
+    textPlot = plt.text(0,0,"")
+    handle = None
 
     count = []
     rects = []
@@ -74,9 +51,9 @@ def main():
     g = 0
     for f in totalImages:
     
-        detectionsClassified = []
         f = f.astype(np.uint8)
         imagem = copy.deepcopy(f)
+        
         if filterPopCountFlag:
             imagem = filterUtils.popCountDownSample(imagem)
         else:

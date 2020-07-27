@@ -31,9 +31,11 @@ class segmentationUtils:
         if opt.__contains__('neuromorphic'):
             img = imagem.astype(np.uint8)
             #img[img == 255] = 0
+            #img[img != 0] = 255
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
+            # img = imagem.astype(np.uint8)
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
         
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
@@ -45,7 +47,7 @@ class segmentationUtils:
         sure_bg = cv.dilate(opening,kernel,iterations=5)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
-        ret, sure_fg = cv.threshold(dist_transform,0.005*dist_transform.max(),255,0)
+        ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
         # Finding unknown region
         sure_fg = np.uint8(sure_fg)
         #sure_fg = filterUtils.median(sure_fg)
@@ -61,7 +63,7 @@ class segmentationUtils:
         img2[markers == -1] = [255,0,0]
 
         detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)        
-        #imagem = segmentationUtils.drawRect(imagem,detections)
+        #imagem = segmentationUtils.drawRect(imagem,detections,3)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
         return imagem, markers, detections, opening, sure_fg, sure_bg,markers
 
@@ -94,7 +96,7 @@ class segmentationUtils:
             elif (not smallBBFilter):
                 objects.append([x, y, width, height])
 
-        print(len(objects))
+        # print(len(objects))
         
         objects = segmentationUtils.getCentroid(objects)
         objects = segmentationUtils.getPointsFromCoordinates(objects)
@@ -110,11 +112,13 @@ class segmentationUtils:
     '''
     def closerToCenter(coordinates):
         if(len(coordinates) > 0):
-            minOfEachColumn = np.where(coordinates == np.amin(coordinates,axis=0))
-            print('coordenadas dos valores mínimos de cada coluna do array de coordenadas: ',minOfEachColumn)
-            print('array de coordenadas: ',coordinates)
+            minOfEachColumn = np.amin(coordinates,axis=0)
+            minOfEachColumnCoord = np.where(coordinates == np.amin(coordinates,axis=0))
+            # print('coordenadas dos valores mínimos de cada coluna do array de coordenadas: ',minOfEachColumn)
+            # print('array de coordenadas: ',coordinates)
+            limitOfDistance = ((math.sqrt(((imageDimensions[0]-imageDimensions[0]/2)**2)+((imageDimensions[1]-imageDimensions[1]/2)**2)))*0.2)
         for i in range(len(coordinates)):
-            if i == minOfEachColumn[0][6] and coordinates[minOfEachColumn[0][6]][6] < imageDimensions[0]*0.2:
+            if coordinates[i][6] == minOfEachColumn[6]:
                 coordinates[i].append('closerToCenter')
             else:
                 coordinates[i].append('notCloserToCenter')
@@ -156,20 +160,21 @@ class segmentationUtils:
     def checkIntersec(coordinates,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter = True):
         count = len(coordinates)
         register = 0
+        maxDistance = math.sqrt(imageDimensions[0]**2 + imageDimensions[1]**2)
         if (centroidDistanceFilter or mergeOverlapingDetectionsFilter):
             for i in range(len(coordinates)):
                 for j in range(len(coordinates)):
                     if j > i:
                         area = iou.bb_intersection_over_union(coordinates[i],coordinates[j])
                         distance = segmentationUtils.getDistance(coordinates[i],coordinates[j])
-                        if (area > 0.0 and area != 1.0 and mergeOverlapingDetectionsFilter) or (centroidDistanceFilter and distance < 50):
+                        if (area > 0.0 and area != 1.0 and mergeOverlapingDetectionsFilter) or (centroidDistanceFilter and distance < 0.35*maxDistance):
                             return True, [i,j]
                     
         return False, None
 
     def getDistance(boxA, boxB):
         distance = math.sqrt(((boxA[4]-boxB[4])**2)+((boxA[5]-boxB[5])**2))
-        print('distance: '+ str(distance))
+        # print('distance: '+ str(distance))
         return distance
 
     def drawRect(img, detections,lineWidth=None):
@@ -253,13 +258,14 @@ class segmentationUtils:
         
         neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
         nImage = copy.deepcopy(neuromorphicImage)
-        standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/standard_mouse.jpeg')
-        watershedStandardImage, standardMask,standardDetection = segmentationUtils.watershed(standardImage)
+        standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/HV5_FOTO 1.jpg')
+
+        watershedStandardImage, standardMask,standardDetection, standardOpening, standardSure_fg, standardSure_bg,standardMarkers = segmentationUtils.watershed(standardImage)
         
         neuromorphicImage = filterUtils.avg(neuromorphicImage)
         neuromorphicImage = filterUtils.median(neuromorphicImage)
 
-        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection = segmentationUtils.watershed(neuromorphicImage,'--neuromorphic')
+        watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection, neurOpening, neuroSure_fg, neuroSure_bg,neuroMarkers = segmentationUtils.watershed(neuromorphicImage,'--neuromorphic')
         
       
         f, axarr = plt.subplots(2,3)

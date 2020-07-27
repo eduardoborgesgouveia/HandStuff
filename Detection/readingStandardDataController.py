@@ -5,14 +5,19 @@ import matplotlib.pyplot as plt
 from openAEDAT import aedatUtils
 import matplotlib.animation as animation
 from segmentationUtils import segmentationUtils
+from filterUtils import filterUtils
 import matplotlib.patches as patches
-
+import copy 
 
 def main():
             
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/multi_objects.mp4'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/HV5_FOTO1.jpg'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/multi_objects.mp4'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/four_objects.mp4'
-
+    
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/CBEB - 2020/codigo/video_fn_2.mp4'
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/CBEB - 2020/codigo/video_fn_3.mp4'
+    # path = '/home/eduardo/Documentos/DVS/Eduardo work/CBEB - 2020/codigo/assets/video_piloto_1.mp4'
 
 
     video = cv.VideoCapture(path)
@@ -32,18 +37,23 @@ def main():
     texts = []
     while(video.isOpened()):
         ret, frame = video.read()
+        if(ret == False):
+            break
         if frame.shape != 0:
-            frame = cv.rotate(frame, cv.ROTATE_90_CLOCKWISE)
-            watershedImage, mask, detection = segmentationUtils.watershed(frame,minimumSizeBox=0.5,smallBBFilter=True,centroidDistanceFilter = True, mergeOverlapingDetectionsFilter = True)
+            #frame = cv.rotate(frame, cv.ROTATE_90_CLOCKWISE)
+            imagem = copy.deepcopy(frame)
+            # imagem = filterUtils.avg(imagem)
+            # imagem = filterUtils.median(imagem)
+            watershedImage, mask, detection,opening, sure_fg, sure_bg,markers = segmentationUtils.watershed(imagem,options="--neuromorphic",minimumSizeBox=0,smallBBFilter=False,centroidDistanceFilter = True, mergeOverlapingDetectionsFilter = True)
 
             if plotMask:
-                axarr[0].imshow(watershedImage)
+                axarr[0].imshow(frame)
                 axarr[1].imshow(mask)
             else:
                 if handle is None:
-                    handle = plt.imshow(watershedImage)
+                    handle = plt.imshow(frame)
                 else:
-                    handle.set_data(watershedImage)
+                    handle.set_data(frame)
             cleanFigure(rects,texts)
             for j in range(len(detection)):
                 rect = patches.Rectangle((detection[j][1],detection[j][0]),detection[j][3],detection[j][2],linewidth=1,edgecolor='r',facecolor='none')
