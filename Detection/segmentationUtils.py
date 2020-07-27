@@ -19,7 +19,7 @@ class segmentationUtils:
             avaiable options:
                 '--neuromorphic' - is the declaration of neuromorphic image or else is a RGB image
     '''
-    def watershed(imagem,options=None,minimumSizeBox = 2,smallBBFilter = True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter=True):
+    def watershed(imagem,options=None,minimumSizeBox = 2,smallBBFilter = True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter=True,flagCloserToCenter = False):
 
         opt = []
         global imageDimensions 
@@ -30,12 +30,12 @@ class segmentationUtils:
 
         if opt.__contains__('neuromorphic'):
             img = imagem.astype(np.uint8)
-            #img[img == 255] = 0
-            #img[img != 0] = 255
+            img[img == 255] = 0
+            img = filterUtils.avg(img)
+            img = filterUtils.median(img) 
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
-            # img = imagem.astype(np.uint8)
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
         
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
@@ -50,7 +50,6 @@ class segmentationUtils:
         ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
         # Finding unknown region
         sure_fg = np.uint8(sure_fg)
-        #sure_fg = filterUtils.median(sure_fg)
         unknown = cv.subtract(sure_bg,sure_fg)
         # Marker labelling
         ret, markers = cv.connectedComponents(sure_fg)
@@ -64,8 +63,19 @@ class segmentationUtils:
 
         detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)        
         #imagem = segmentationUtils.drawRect(imagem,detections,3)
+        detections = segmentationUtils.getOnlyCloseToCenter(flagCloserToCenter,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
         return imagem, markers, detections, opening, sure_fg, sure_bg,markers
+
+    def getOnlyCloseToCenter(flagCloserToCenter, detections):
+        retorno = []
+        if(flagCloserToCenter):
+            for j in range(len(detections)):
+                if (detections[j][7] == 'closerToCenter'):
+                    retorno.append(detections[j])
+        else:
+            retorno = copy.deepcopy(detections)
+        return retorno
 
     '''
     this method was make in order to receive a mask from multiple detection using the watershed method
