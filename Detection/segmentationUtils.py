@@ -247,6 +247,13 @@ class segmentationUtils:
                 objects.append([x1, y1, width, lenght, detections[i][4], detections[i][5],detections[i][6],detections[i][7]])
         return objects
 
+    #this function get the original image and extract the ROI
+    def getROI(detection,image):
+        dim = (128,128)
+        crop_img = image[(detection[0]+1):detection[0]+detection[2],(detection[1]+1):detection[1]+detection[3]]
+        crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_AREA)
+        crop_img = crop_img.reshape(1, 128, 128, 1)
+        return crop_img
 
     '''
     this method run a demo for watershed segmentation technique. 
