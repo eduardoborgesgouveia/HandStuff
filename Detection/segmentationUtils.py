@@ -251,6 +251,14 @@ class segmentationUtils:
     def getROI(d, image):
         if len(d) > 0:
             dim = (128, 128)
+            biggerEdge = max(d[0][2],d[0][3])
+            smallerEdge = min(d[0][2],d[0][3])
+            delta = int((biggerEdge - smallerEdge)/2)
+            if(d[0].index(smallerEdge) == 2):
+                d[0][0] = d[0][0]-delta
+            else:
+                d[0][1] = d[0][1]-delta
+            d[0][d[0].index(smallerEdge)] = biggerEdge
             crop_img = image[(d[0][0] + 1) : d[0][0] + d[0][2], (d[0][1] + 1) : d[0][1] + d[0][3]]
             crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_NEAREST)
             # crop_img = crop_img.reshape(1, 128, 128, 1)
