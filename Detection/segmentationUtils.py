@@ -10,7 +10,7 @@ from filterUtils import filterUtils
 
 class segmentationUtils:
 
-    
+
     '''
     parameters:
         imagem - desired image
@@ -22,7 +22,7 @@ class segmentationUtils:
     def watershed(imagem,options=None,minimumSizeBox = 2,smallBBFilter = True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter=True,flagCloserToCenter = False):
 
         opt = []
-        global imageDimensions 
+        global imageDimensions
         imageDimensions = imagem.shape
         if options != None:
             options = "".join(options.split())
@@ -30,20 +30,20 @@ class segmentationUtils:
 
         if opt.__contains__('neuromorphic'):
             img = imagem.astype(np.uint8)
+            img = filterUtils.median(img)
             img[img == 255] = 0
             img = filterUtils.avg(img)
-            img = filterUtils.median(img) 
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
             img = cv.cvtColor(imagem,cv.COLOR_RGB2GRAY)
-        
+
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
         kernel = np.ones((1,1),np.uint8)
         opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 1)
         # sure background area
-        
+
         sure_bg = cv.dilate(opening,kernel,iterations=5)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
@@ -61,7 +61,7 @@ class segmentationUtils:
         markers = cv.watershed(img2,markers)
         img2[markers == -1] = [255,0,0]
 
-        detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)        
+        detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
         #imagem = segmentationUtils.drawRect(imagem,detections,3)
         detections = segmentationUtils.getOnlyCloseToCenter(flagCloserToCenter,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
@@ -98,16 +98,16 @@ class segmentationUtils:
             lastX = max(positions[0])
             lastY = max(positions[1])
             width = lastX - x
-            height = lastY - y 
+            height = lastY - y
             #if the area of the detection is bigger then 20% of the image size (128 * 128 = 16384)
             #so if the bb area is larger then 0.2*16384 the bb need to be keep. Otherwise I ignore then
-            if ((smallBBFilter) and (width * height)>((minimumSizeBox/100.0)*(mask.shape[0]*mask.shape[1]))):    
+            if ((smallBBFilter) and (width * height)>((minimumSizeBox/100.0)*(mask.shape[0]*mask.shape[1]))):
                 objects.append([x, y, width, height])
             elif (not smallBBFilter):
                 objects.append([x, y, width, height])
 
         # print(len(objects))
-        
+
         objects = segmentationUtils.getCentroid(objects)
         objects = segmentationUtils.getPointsFromCoordinates(objects)
         objects = segmentationUtils.filterDetections(objects,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
@@ -132,7 +132,7 @@ class segmentationUtils:
                 coordinates[i].append('closerToCenter')
             else:
                 coordinates[i].append('notCloserToCenter')
-        
+
         return coordinates
 
 
@@ -140,10 +140,10 @@ class segmentationUtils:
 
 
     '''
-        INPUT -> 
+        INPUT ->
             coordinates =
                  [x, y, width, height]
-        OUTPUT -> 
+        OUTPUT ->
             coordinates =
                 [x, y, width, height, centroidx, centroidy, distanceToCenter]
     '''
@@ -179,7 +179,7 @@ class segmentationUtils:
                         distance = segmentationUtils.getDistance(coordinates[i],coordinates[j])
                         if (area > 0.0 and area != 1.0 and mergeOverlapingDetectionsFilter) or (centroidDistanceFilter and distance < 0.35*maxDistance):
                             return True, [i,j]
-                    
+
         return False, None
 
     def getDistance(boxA, boxB):
@@ -215,7 +215,7 @@ class segmentationUtils:
             X2 = min(coordinates[pos[0]][0],coordinates[pos[0]][2],coordinates[pos[1]][0],coordinates[pos[1]][2])
             Y1 = max(coordinates[pos[0]][1],coordinates[pos[0]][3],coordinates[pos[1]][1],coordinates[pos[1]][3])
             Y2 = min(coordinates[pos[0]][1],coordinates[pos[0]][3],coordinates[pos[1]][1],coordinates[pos[1]][3])
-            width = X1 - X2        
+            width = X1 - X2
             height = Y1 - Y2
 
             coordWithCentroid = segmentationUtils.getCentroid([[X2, Y2, width, height]])
@@ -224,7 +224,7 @@ class segmentationUtils:
             coordinates.remove(detections[pos[1]])
 
             retorno = coordinates
-            retorno.append([X2, Y2, X1, Y1, coordWithCentroid[0][4],coordWithCentroid[0][5],coordWithCentroid[0][6]])                   
+            retorno.append([X2, Y2, X1, Y1, coordWithCentroid[0][4],coordWithCentroid[0][5],coordWithCentroid[0][6]])
         return retorno
 
     def getPointsFromCoordinates(detections):
@@ -248,15 +248,18 @@ class segmentationUtils:
         return objects
 
     #this function get the original image and extract the ROI
-    def getROI(detection,image):
-        dim = (128,128)
-        crop_img = image[(detection[0]+1):detection[0]+detection[2],(detection[1]+1):detection[1]+detection[3]]
-        crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_AREA)
-        crop_img = crop_img.reshape(1, 128, 128, 1)
-        return crop_img
+    def getROI(d, image):
+        if len(d) > 0:
+            dim = (128, 128)
+            crop_img = image[(d[0][0] + 1) : d[0][0] + d[0][2], (d[0][1] + 1) : d[0][1] + d[0][3]]
+            crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_NEAREST)
+            # crop_img = crop_img.reshape(1, 128, 128, 1)
+            return crop_img
+        else:
+            return image
 
     '''
-    this method run a demo for watershed segmentation technique. 
+    this method run a demo for watershed segmentation technique.
     this will plot 4 images:
         - 1 standard image (original)
         - 1 standard image (watershed segmentation)
@@ -272,19 +275,19 @@ class segmentationUtils:
         off_set_text = 3
 
         dim = (128,128)
-        
+
         neuromorphicImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Detection/assets/testes/Mouse_22.png')
         nImage = copy.deepcopy(neuromorphicImage)
         standardImage = cv.imread('/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/Standard files/HV5_FOTO 1.jpg')
 
         watershedStandardImage, standardMask,standardDetection, standardOpening, standardSure_fg, standardSure_bg,standardMarkers = segmentationUtils.watershed(standardImage)
-        
+
         neuromorphicImage = filterUtils.avg(neuromorphicImage)
         neuromorphicImage = filterUtils.median(neuromorphicImage)
 
         watershedNeuromorphicImage, neuromorphicMask,neuromorphicDetection, neurOpening, neuroSure_fg, neuroSure_bg,neuroMarkers = segmentationUtils.watershed(neuromorphicImage,'--neuromorphic')
-        
-      
+
+
         f, axarr = plt.subplots(2,3)
         axarr[0,0].set_title('neuromorphic image [original]')
         axarr[0,0].imshow(nImage)
@@ -308,7 +311,7 @@ class segmentationUtils:
 
         axarr[1,2].set_title('croped bounding box')
         axarr[1,2].imshow(crop_standard)
-        
+
 
         model = classifierTools.openModel('model/model.json',
 							              'model/model.h5')
