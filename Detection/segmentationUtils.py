@@ -30,9 +30,9 @@ class segmentationUtils:
 
         if opt.__contains__('neuromorphic'):
             img = imagem.astype(np.uint8)
+            img = filterUtils.median(img) 
             img[img == 255] = 0
             img = filterUtils.avg(img)
-            img = filterUtils.median(img) 
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
@@ -252,7 +252,7 @@ class segmentationUtils:
         dim = (128,128)
         crop_img = image[(detection[0]+1):detection[0]+detection[2],(detection[1]+1):detection[1]+detection[3]]
         crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_AREA)
-        crop_img = crop_img.reshape(1, 128, 128, 1)
+        #crop_img = crop_img.reshape(1, 128, 128, 1)
         return crop_img
 
     '''
