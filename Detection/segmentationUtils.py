@@ -255,9 +255,9 @@ class segmentationUtils:
             smallerEdge = min(d[0][2],d[0][3])
             delta = int((biggerEdge - smallerEdge)/2)
             if(d[0].index(smallerEdge) == 2):
-                d[0][0] = d[0][0]-delta
+                d[0][0] = 0 if (d[0][0]-delta) < 0 else d[0][0]-delta
             else:
-                d[0][1] = d[0][1]-delta
+                d[0][1] = 0 if (d[0][1]-delta) < 0 else d[0][1]-delta
             d[0][d[0].index(smallerEdge)] = biggerEdge
             crop_img = image[(d[0][0] + 1) : d[0][0] + d[0][2], (d[0][1] + 1) : d[0][1] + d[0][3]]
             crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_NEAREST)
