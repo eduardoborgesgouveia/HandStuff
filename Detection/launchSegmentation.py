@@ -13,8 +13,8 @@ def main():
 
 
     #Caminho para o arquivo .aedat
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/knife_1.aedat'
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/knife_1.aedat'
     #carregando o arquivo aedat
     t, x, y, p = aedatUtils.loadaerdat(path)
     
@@ -59,9 +59,9 @@ def main():
 
         teste = segmentationUtils.getROI(detection,f)
         if handle is None:      
-            handle = plt.imshow(np.dstack([teste,teste,teste]))                
+            handle = plt.imshow(np.dstack([f,f,f]))                
         else:
-            handle.set_data(np.dstack([teste,teste,teste]))
+            handle.set_data(np.dstack([f,f,f]))
     
         plt.pause(tI/1000000)
         plt.draw()
