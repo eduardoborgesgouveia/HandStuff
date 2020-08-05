@@ -249,6 +249,7 @@ class segmentationUtils:
 
     #this function get the original image and extract the ROI
     def getROI(d, image):
+        _ = 0
         if len(d) > 0:
             dim = (128, 128)
             biggerEdge = max(d[0][2],d[0][3])
@@ -260,11 +261,11 @@ class segmentationUtils:
                 d[0][1] = 0 if (d[0][1]-delta) < 0 else d[0][1]-delta
             d[0][d[0].index(smallerEdge)] = biggerEdge
             crop_img = image[(d[0][0] + 1) : d[0][0] + d[0][2], (d[0][1] + 1) : d[0][1] + d[0][3]]
-            crop_img = cv.resize(crop_img, dim, interpolation = cv.INTER_NEAREST)
+            interp_img = cv.resize(crop_img, dim, interpolation = cv.INTER_NEAREST)
             # crop_img = crop_img.reshape(1, 128, 128, 1)
-            return crop_img
+            return crop_img, interp_img
         else:
-            return image
+            return image, image
 
     '''
     this method run a demo for watershed segmentation technique.
