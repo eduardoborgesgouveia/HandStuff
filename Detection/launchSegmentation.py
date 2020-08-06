@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import copy 
+import cv2 as cv
 from openAEDAT import aedatUtils
 from segmentationUtils import segmentationUtils
 
@@ -9,17 +10,18 @@ from segmentationUtils import segmentationUtils
 def main():
         
     #caso você queira que os retangulos sejam desenhados na tela:
-    rectFlag = False
+    rectFlag = True
 
 
     #Caminho para o arquivo .aedat
     path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/knife_1.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
     #carregando o arquivo aedat
     t, x, y, p = aedatUtils.loadaerdat(path)
     
     #determinando o intervalo de tempo para agrupamento dos eventos
-    tI=33000 #33 ms
+    tI=50000 #50 ms
 
     #carregando todos os eventos agrupados em frames
     totalImages = []
@@ -34,7 +36,7 @@ def main():
     rects = []
 
     teste = np.zeros_like(totalImages[0])
-
+    imageVector = []
     for f in totalImages:
     
         f = f.astype(np.uint8)
@@ -62,13 +64,23 @@ def main():
             handle = plt.imshow(np.dstack([f,f,f]))                
         else:
             handle.set_data(np.dstack([f,f,f]))
-    
+        imageVector.append(watershedImage)
         plt.pause(tI/1000000)
         plt.draw()
-    
+    filmaker(imageVector,name="ajustado_4.avi")
     
         
-
+def filmaker(imageVector, name="video.avi"):
+    #Cria um vídeo no formato .avi juntando todos os frames.
+    video_name = name
+    images = imageVector
+    height, width, layers = (128,128,3)
+    fourcc = cv.VideoWriter_fourcc(*'DIVX') 
+    video = cv.VideoWriter(video_name, fourcc, 10, (width,height))
+    for image in images:
+       video.write(np.dstack([image,image,image]))
+    cv.destroyAllWindows()
+    video.release()
 
 def cleanFigure(rects = [],texts = []):
     for s in range(len(rects)):

@@ -10,7 +10,6 @@ from filterUtils import filterUtils
 
 class segmentationUtils:
 
-
     '''
     parameters:
         imagem - desired image
@@ -22,6 +21,8 @@ class segmentationUtils:
     def watershed(imagem,options=None,minimumSizeBox = 2,smallBBFilter = True,centroidDistanceFilter=True,mergeOverlapingDetectionsFilter=True,flagCloserToCenter = False):
 
         opt = []
+        flagNeuromorphic = False
+        occurrences = 0
         global imageDimensions
         imageDimensions = imagem.shape
         if options != None:
@@ -29,10 +30,13 @@ class segmentationUtils:
             opt = options.split('--')
 
         if opt.__contains__('neuromorphic'):
+            flagNeuromorphic = True
             img = imagem.astype(np.uint8)
-            img = filterUtils.median(img)
+            #img = filterUtils.median(img)
+            #img = cv.medianBlur(img,3)
             img[img == 255] = 0
-            img = filterUtils.avg(img)
+            #img = filterUtils.avg(img)
+            occurrences = np.count_nonzero(img == 0)
             if len(img.shape) == 3:
                 img = cv.cvtColor(img,cv.COLOR_RGB2GRAY)
         else:
@@ -40,14 +44,22 @@ class segmentationUtils:
 
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         # noise removal
-        kernel = np.ones((1,1),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 1)
+        kernel = np.ones((2,2),np.uint8)
+        ite_1 = 1
+        ite_2 = 1
+        if flagNeuromorphic and occurrences < 500:
+            kernel = cv.getStructuringElement(shape=cv.MORPH_RECT, ksize=(3,3))
+        elif flagNeuromorphic and occurrences >= 500:
+            kernel = np.ones((1,1),np.uint8)
+            ite_1 = 3
+            ite_2 = 5
+        
+        opening = cv.morphologyEx(thresh,cv.MORPH_DILATE,kernel, iterations = ite_1)
         # sure background area
-
-        sure_bg = cv.dilate(opening,kernel,iterations=5)
+        sure_bg = cv.dilate(opening,kernel,iterations=ite_2)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
-        ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
+        ret, sure_fg = cv.threshold(dist_transform,0.05*dist_transform.max(),255,0)
         # Finding unknown region
         sure_fg = np.uint8(sure_fg)
         unknown = cv.subtract(sure_bg,sure_fg)
@@ -62,8 +74,8 @@ class segmentationUtils:
         img2[markers == -1] = [255,0,0]
 
         detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
-        #imagem = segmentationUtils.drawRect(imagem,detections,3)
         detections = segmentationUtils.getOnlyCloseToCenter(flagCloserToCenter,detections)
+        imagem = segmentationUtils.drawRect(imagem,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
         return imagem, markers, detections, opening, sure_fg, sure_bg,markers
 
