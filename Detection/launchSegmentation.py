@@ -16,12 +16,13 @@ def main():
     #Caminho para o arquivo .aedat
     path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/knife_1.aedat'
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
+    #path = "/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/longer records/Nada2.aedat"
     #carregando o arquivo aedat
     t, x, y, p = aedatUtils.loadaerdat(path)
     
     #determinando o intervalo de tempo para agrupamento dos eventos
-    tI=50000 #50 ms
+    tI=33000 #33 ms
 
     #carregando todos os eventos agrupados em frames
     totalImages = []
@@ -42,7 +43,7 @@ def main():
         f = f.astype(np.uint8)
         imagem = copy.deepcopy(f)
         
-        watershedImage, mask, detection, opening, sure_fg, sure_bg, markers = segmentationUtils.watershed(imagem,'--neuromorphic',minimumSizeBox=0.5,smallBBFilter=True,centroidDistanceFilter = True, mergeOverlapingDetectionsFilter = True,flagCloserToCenter=True)
+        watershedImage, mask, detection, opening, sure_fg, sure_bg, markers,_ = segmentationUtils.watershed(imagem,'--neuromorphic',minimumSizeBox=0.5,smallBBFilter=True,centroidDistanceFilter = True, mergeOverlapingDetectionsFilter = True,flagCloserToCenter=True)
         #detection contém todas as bounding box
         #cada bounding box tem o formato:
             # x -- detection[0]
@@ -67,7 +68,7 @@ def main():
         imageVector.append(watershedImage)
         plt.pause(tI/1000000)
         plt.draw()
-    filmaker(imageVector,name="ajustado_4.avi")
+    #filmaker(imageVector,name="modificado_14_banana.avi")
     
         
 def filmaker(imageVector, name="video.avi"):
