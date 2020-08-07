@@ -14,15 +14,15 @@ def main():
 
 
     #Caminho para o arquivo .aedat
-    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
+    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/knife_1.aedat'
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
     #path = "/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/longer records/Nada2.aedat"
     #carregando o arquivo aedat
     t, x, y, p = aedatUtils.loadaerdat(path)
     
     #determinando o intervalo de tempo para agrupamento dos eventos
-    tI=50000 #50 ms
+    tI=33000 #50 ms
 
     #carregando todos os eventos agrupados em frames
     totalImages = []
@@ -68,7 +68,7 @@ def main():
         imageVector.append(watershedImage)
         plt.pause(tI/1000000)
         plt.draw()
-    #filmaker(imageVector,name="modificado_14_banana.avi")
+    filmaker(imageVector,name="banana_modificado_07-08.avi")
     
         
 def filmaker(imageVector, name="video.avi"):

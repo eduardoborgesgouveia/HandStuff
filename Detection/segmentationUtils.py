@@ -52,7 +52,7 @@ class segmentationUtils:
         opening = cv.morphologyEx(thresh,cv.MORPH_GRADIENT,kernel, iterations = 1)
         #opening = cv.morphologyEx(opening,cv.MORPH_OPEN,kernel, iterations = 2)
         # sure background area
-        #kernel = np.ones((2,2),np.uint8)
+        kernel = np.ones((1,1),np.uint8)
         sure_bg = cv.dilate(opening,kernel,iterations=1)
 
         sure_bg = cv.morphologyEx(sure_bg,cv.MORPH_CLOSE,kernel, iterations = 1)
