@@ -13,10 +13,10 @@ import matplotlib.patches as patches
 #path = '/media/eduardo/9E1C99C51C99993B/Users/Samsung/Meus Documentos/Mestrado/HandStuff/Datasource/AEDAT_files/Celular.aedat'
 path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
 #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
-path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
+#path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
 t, x, y, p = aedatUtils.loadaerdat(path)
 
-tI=33000 #33 ms
+tI=50000 #50 ms
 
 totalImages = []
 totalImages = aedatUtils.getFramesTimeBased(t,p,x,y,tI,False)

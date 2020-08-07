@@ -22,7 +22,7 @@ def main():
     t, x, y, p = aedatUtils.loadaerdat(path)
     
     #determinando o intervalo de tempo para agrupamento dos eventos
-    tI=33000 #50 ms
+    tI=50000 #50 ms
 
     #carregando todos os eventos agrupados em frames
     totalImages = []
@@ -68,7 +68,7 @@ def main():
         imageVector.append(watershedImage)
         plt.pause(tI/1000000)
         plt.draw()
-    filmaker(imageVector,name="knife_modificado_07-08.avi")
+    filmaker(imageVector,name="knife_modificado_50_2_07-08.avi")
     
         
 def filmaker(imageVector, name="video.avi"):

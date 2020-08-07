@@ -44,24 +44,20 @@ class segmentationUtils:
 
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         
-        # noise removal
-        #M = np.zeros((5, 5), dtype=np.uint8)
-        #kernel = cv.getStructuringElement(cv.MORPH_CROSS,(3,3))
-        #kernel = cv.dilate(M, kernel, iterations=2)
+        
         kernel = np.ones((2,2),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_GRADIENT,kernel, iterations = 1)
-        #opening = cv.morphologyEx(opening,cv.MORPH_OPEN,kernel, iterations = 2)
-        # sure background area
+        thresh = cv.dilate(thresh,kernel,iterations=1)
+        
+        # noise removal
         kernel = np.ones((1,1),np.uint8)
-        sure_bg = cv.dilate(opening,kernel,iterations=1)
+        opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
+        # sure background area
 
-        sure_bg = cv.morphologyEx(sure_bg,cv.MORPH_CLOSE,kernel, iterations = 1)
-
-
+        sure_bg = cv.dilate(opening,kernel,iterations=3)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
-        ret, sure_fg = cv.threshold(dist_transform,0.001*dist_transform.max(),255,0)
-        
+        ret, sure_fg = cv.threshold(dist_transform,0.05*dist_transform.max(),255,0)
+
         # Finding unknown region
         sure_fg = np.uint8(sure_fg)
         unknown = cv.subtract(sure_bg,sure_fg)
