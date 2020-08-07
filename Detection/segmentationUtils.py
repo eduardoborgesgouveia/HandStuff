@@ -77,9 +77,9 @@ class segmentationUtils:
 
         detections = segmentationUtils.makeRectDetection(markers,minimumSizeBox,smallBBFilter,centroidDistanceFilter,mergeOverlapingDetectionsFilter)
         detections = segmentationUtils.getOnlyCloseToCenter(flagCloserToCenter,detections)
-        imagem = segmentationUtils.drawRect(imagem,detections)
+        #imagem = segmentationUtils.drawRect(imagem,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
-        return imagem, markers, detections, opening, sure_fg, sure_bg,markers, thresh
+        return imagem, markers, detections, opening, sure_fg, sure_bg,markers #, thresh
 
     def getOnlyCloseToCenter(flagCloserToCenter, detections):
         retorno = []
