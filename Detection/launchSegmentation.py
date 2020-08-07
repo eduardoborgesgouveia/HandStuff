@@ -14,7 +14,7 @@ def main():
 
 
     #Caminho para o arquivo .aedat
-    path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
+    #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/banana_1.aedat'
     #path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/knife_1.aedat'
     path = '/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/standardized data/Phone.aedat'
     #path = "/home/eduardo/Documentos/DVS/Eduardo work/Mestrado/Datasource/AEDAT_files/random data/longer records/Nada2.aedat"
@@ -22,7 +22,7 @@ def main():
     t, x, y, p = aedatUtils.loadaerdat(path)
     
     #determinando o intervalo de tempo para agrupamento dos eventos
-    tI=33000 #33 ms
+    tI=50000 #50 ms
 
     #carregando todos os eventos agrupados em frames
     totalImages = []

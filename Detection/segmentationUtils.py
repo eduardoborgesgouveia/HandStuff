@@ -45,10 +45,14 @@ class segmentationUtils:
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         
         # noise removal
-        kernel = np.ones((1,1),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
-        # sure background area
+        #M = np.zeros((5, 5), dtype=np.uint8)
+        #kernel = cv.getStructuringElement(cv.MORPH_CROSS,(3,3))
+        #kernel = cv.dilate(M, kernel, iterations=2)
         kernel = np.ones((2,2),np.uint8)
+        opening = cv.morphologyEx(thresh,cv.MORPH_GRADIENT,kernel, iterations = 1)
+        #opening = cv.morphologyEx(opening,cv.MORPH_OPEN,kernel, iterations = 2)
+        # sure background area
+        #kernel = np.ones((2,2),np.uint8)
         sure_bg = cv.dilate(opening,kernel,iterations=1)
 
         sure_bg = cv.morphologyEx(sure_bg,cv.MORPH_CLOSE,kernel, iterations = 1)
