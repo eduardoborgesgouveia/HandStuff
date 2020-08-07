@@ -68,7 +68,7 @@ def main():
         imageVector.append(watershedImage)
         plt.pause(tI/1000000)
         plt.draw()
-    filmaker(imageVector,name="knife_modificado_50_2_07-08.avi")
+    #filmaker(imageVector,name="knife_modificado_50_2_07-08.avi")
     
         
 def filmaker(imageVector, name="video.avi"):

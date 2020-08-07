@@ -45,15 +45,12 @@ class segmentationUtils:
         ret, thresh = cv.threshold(img,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
         
         
-        kernel = np.ones((2,2),np.uint8)
-        thresh = cv.dilate(thresh,kernel,iterations=1)
-        
-        # noise removal
+       # noise removal
         kernel = np.ones((1,1),np.uint8)
-        opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
+        opening = cv.morphologyEx(thresh,cv.MORPH_ELLIPSE,kernel, iterations = 1)
         # sure background area
 
-        sure_bg = cv.dilate(opening,kernel,iterations=3)
+        sure_bg = cv.dilate(opening,kernel,iterations=5)
         # Finding sure foreground area
         dist_transform = cv.distanceTransform(opening,cv.DIST_L2,0)
         ret, sure_fg = cv.threshold(dist_transform,0.05*dist_transform.max(),255,0)
@@ -75,7 +72,7 @@ class segmentationUtils:
         detections = segmentationUtils.getOnlyCloseToCenter(flagCloserToCenter,detections)
         #imagem = segmentationUtils.drawRect(imagem,detections)
         detections = segmentationUtils.getCoordinatesFromPoints(detections)
-        return imagem, markers, detections, opening, sure_fg, sure_bg,markers #, thresh
+        return imagem, markers, detections, opening, sure_fg, sure_bg,markers#, thresh
 
     def getOnlyCloseToCenter(flagCloserToCenter, detections):
         retorno = []
